@@ -31,6 +31,7 @@ sudo
 tar
 vim-enhanced
 which
+yum
 -open-vm-tools
 -firewalld
 -kernel
