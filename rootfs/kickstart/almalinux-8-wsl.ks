@@ -25,6 +25,8 @@ shutdown
 curl
 dnf
 file
+iputils
+passwd
 rpm
 sed
 sudo
@@ -32,15 +34,15 @@ tar
 vim-enhanced
 which
 yum
--open-vm-tools
--firewalld
--kernel
--iptables
--os-prober
--openssh-server
--pciutils
--grub\*
 -audit
+-firewalld
+-grub\*
+-iptables
+-kernel
+-open-vm-tools
+-openssh-server
+-os-prober
+-pciutils
 %end
 
 %post --erroronfail --log=/root/anaconda-post.log

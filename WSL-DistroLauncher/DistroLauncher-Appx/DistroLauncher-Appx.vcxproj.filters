@@ -34,9 +34,6 @@
     <Image Include="Assets\SmallTile.scale-200.png">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="Assets\SmallTile.scale-400.png">
-      <Filter>Assets</Filter>
-    </Image>
     <Image Include="Assets\Square150x150Logo.scale-100.png">
       <Filter>Assets</Filter>
     </Image>
@@ -46,9 +43,6 @@
     <Image Include="Assets\Square150x150Logo.scale-150.png">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="Assets\Square150x150Logo.scale-400.png">
-      <Filter>Assets</Filter>
-    </Image>
     <Image Include="Assets\Wide310x150Logo.scale-100.png">
       <Filter>Assets</Filter>
     </Image>
@@ -56,9 +50,6 @@
       <Filter>Assets</Filter>
     </Image>
     <Image Include="Assets\Wide310x150Logo.scale-150.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Assets\Wide310x150Logo.scale-400.png">
       <Filter>Assets</Filter>
     </Image>
     <Image Include="Assets\LargeTile.scale-100.png">
@@ -73,9 +64,6 @@
     <Image Include="Assets\LargeTile.scale-200.png">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="Assets\LargeTile.scale-400.png">
-      <Filter>Assets</Filter>
-    </Image>
     <Image Include="Assets\Square44x44Logo.scale-100.png">
       <Filter>Assets</Filter>
     </Image>
@@ -83,9 +71,6 @@
       <Filter>Assets</Filter>
     </Image>
     <Image Include="Assets\Square44x44Logo.scale-150.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Assets\Square44x44Logo.scale-400.png">
       <Filter>Assets</Filter>
     </Image>
     <Image Include="Assets\Square44x44Logo.targetsize-16.png">
@@ -100,9 +85,6 @@
     <Image Include="Assets\Square44x44Logo.targetsize-48.png">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="Assets\Square44x44Logo.targetsize-256.png">
-      <Filter>Assets</Filter>
-    </Image>
     <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-16.png">
       <Filter>Assets</Filter>
     </Image>
@@ -110,9 +92,6 @@
       <Filter>Assets</Filter>
     </Image>
     <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-48.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-256.png">
       <Filter>Assets</Filter>
     </Image>
     <Image Include="Assets\StoreLogo.scale-100.png">
@@ -127,9 +106,6 @@
     <Image Include="Assets\StoreLogo.scale-200.png">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="Assets\StoreLogo.scale-400.png">
-      <Filter>Assets</Filter>
-    </Image>
     <Image Include="Assets\SplashScreen.scale-100.png">
       <Filter>Assets</Filter>
     </Image>
@@ -142,19 +118,57 @@
     <Image Include="Assets\SplashScreen.scale-200.png">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Assets\BadgeLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BadgeLogo.scale-125.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BadgeLogo.scale-150.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BadgeLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SmallTile.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LargeTile.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-256.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.altform-unplated_targetsize-256.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-400.png">
+      <Filter>Assets</Filter>
+    </Image>
     <Image Include="Assets\SplashScreen.scale-400.png">
       <Filter>Assets</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="AlmaLinuxOS.appxmanifest" />
+    <AppxManifest Include="AlmaLinux.appxmanifest" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DistroLauncher-Appx_TemporaryKey.pfx" />
     <None Include="Package.StoreAssociation.xml" />
     <None Include="DistroLauncher-Appx_StoreKey.pfx" />
+    <None Include="..\x64\install.tar.gz" />
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="$(targetname)" />
     <CustomBuild Include="$(targetname)" />
     <CustomBuild Include="$(targetname)" />
     <CustomBuild Include="$(targetname)" />
