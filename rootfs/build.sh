@@ -1,6 +1,5 @@
 #!/bin/bash
-# description: AlmaLinux base Docker image rootfs and Dockerfile generation
-#              script.
+# description: AlmaLinux base image rootfs for WSL use 
 # license: MIT.
 
 set -euo pipefail
