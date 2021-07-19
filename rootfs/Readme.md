@@ -18,10 +18,18 @@ You need an **AlmaLinux system** with following RPM packages installed to run th
 
 This approach can be used in `Windows`, `Mac` or any `Linux` system which has `docker` or `podman` command line installed configured. Issue following command to use `almalinux/ks2rootfs` container to build `rootfs` file in container environment.
 
+Unix/Linux environment support multi line command support, issue following command to build.
+
 ```sh
 docker run --rm --privileged -v "$PWD:/build:z" \
     -e BUILD_KICKSTART=kickstart/almalinux-8-wsl.ks \
     -e BUILD_ROOTFS=almalinux-8-wsl.x86_64.tar.gz \
     -e BUILD_OUTDIR=result \
     almalinux/ks2rootfs
+```
+
+Passing volume input is bit different in windows environment. Following command is example for windows environment. Please adjust  volume input location as needed.
+
+```sh
+docker run --rm --privileged -v "C:\\Proj\\wsl-alma\\rootfs:/build"  -e BUILD_KICKSTART=kickstart/almalinux-8-wsl.ks -e BUILD_ROOTFS=almalinux-8-wsl.x86_64.tar.gz -e BUILD_OUTDIR=result almalinux/ks2rootfs
 ```
