@@ -1,6 +1,6 @@
-# AlmaLinux 8 kickstart file for base Docker image
+# AlmaLinux 8 kickstart file for base WSL image
 
-install
+# install
 url --url https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os/
 
 lang en_US.UTF-8
@@ -26,7 +26,9 @@ curl
 dnf
 file
 iputils
+nano
 passwd
+pciutils
 rpm
 sed
 sudo
@@ -42,7 +44,6 @@ yum
 -open-vm-tools
 -openssh-server
 -os-prober
--pciutils
 %end
 
 %post --erroronfail --log=/root/anaconda-post.log
