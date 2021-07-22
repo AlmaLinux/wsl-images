@@ -25,11 +25,6 @@ docker run --rm --privileged -v "$PWD:/build:z" \
     -e BUILD_KICKSTART=kickstart/almalinux-8-wsl.ks \
     -e BUILD_ROOTFS=almalinux-8-wsl.x86_64.tar.gz \
     -e BUILD_OUTDIR=result \
+    -e BUILD_COMPTYPE gzip \
     almalinux/ks2rootfs
-```
-
-Passing volume input is bit different in windows environment. Following command is example for windows environment. Please adjust  volume input location as needed.
-
-```sh
-docker run --rm --privileged -v "C:\\Proj\\wsl-alma\\rootfs:/build"  -e BUILD_KICKSTART=kickstart/almalinux-8-wsl.ks -e BUILD_ROOTFS=almalinux-8-wsl.x86_64.tar.gz -e BUILD_OUTDIR=result almalinux/ks2rootfs
 ```

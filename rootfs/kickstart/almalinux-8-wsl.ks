@@ -26,6 +26,7 @@ curl
 dnf
 file
 iputils
+nano
 passwd
 pciutils
 rpm

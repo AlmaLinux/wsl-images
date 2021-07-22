@@ -6,7 +6,7 @@ set -euo pipefail
 
 RELEASE_VER='8'
 IMAGE_NAME="almalinux-${RELEASE_VER}-wsl.tar.gz"
-KS_PATH="./kickstarts/almalinux-${RELEASE_VER}-wsl.ks"
+KS_PATH="./kickstart/almalinux-${RELEASE_VER}-wsl.ks"
 OUTPUT_DIR="./result"
 
 
