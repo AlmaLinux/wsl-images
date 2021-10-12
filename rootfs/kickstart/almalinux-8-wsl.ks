@@ -1,7 +1,7 @@
 # AlmaLinux 8 kickstart file for base WSL image
 
 # install
-url --url https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os/
+url --url https://repo.almalinux.org/almalinux/8/BaseOS/$basearch/os/
 
 lang en_US.UTF-8
 keyboard us
@@ -22,28 +22,48 @@ shutdown
 
 %packages --ignoremissing --excludedocs --instLangs=en --nocore
 @^minimal-environment
-curl
-dnf
+dmidecode
+findutils
 file
+gdb-gdbserver
 iputils
+libmetalink
 nano
 passwd
 pciutils
-rpm
-sed
+procps-ng
+rootfiles
 sudo
 tar
-vim-enhanced
+tmux
+usermode
+vim-minimal
+virt-what
 which
 yum
+yum-utils
+xz
 -audit
+-dnf-plugin-subscription-manager
+-dosfstools
+-e2fsprogs
 -firewalld
+-fuse-libs
+-gnupg2-smime
 -grub\*
 -iptables
 -kernel
--open-vm-tools
+-libss
 -openssh-server
+-open-vm-tools
 -os-prober
+-pinentry
+-qemu-guest-agent
+-shared-mime-info
+-subscription-manager
+-trousers
+-xfsprogs
+-xkeyboard-config
 %end
 
 %post --erroronfail --log=/root/anaconda-post.log
@@ -58,7 +78,11 @@ rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
 
 # install only en_US.UTF-8 locale files, see
 # https://fedoraproject.org/wiki/Changes/Glibc_locale_subpackaging for details
+LANG="en_US"
 echo '%_install_langs en_US.UTF-8' > /etc/rpm/macros.image-language-conf
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1727489
+echo 'LANG="C.UTF-8"' >  /etc/locale.conf
 
 # force each container to have a unique machine-id
 > /etc/machine-id
