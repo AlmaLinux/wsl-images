@@ -4,7 +4,7 @@
   <mp:PhoneIdentity PhoneProductId="160867c6-4e75-4e36-85c6-1543de07d5f3" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>AlmaLinux 8</DisplayName>
-    <PublisherDisplayName>AlmaLinux OS Project (Testing)</PublisherDisplayName>
+    <PublisherDisplayName>AlmaLinux OS WSL</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
