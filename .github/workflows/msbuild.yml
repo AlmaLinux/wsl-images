@@ -55,7 +55,7 @@ jobs:
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: |
-        msbuild.exe /m /p:Configuration=$env:BUILD_CONFIGURATION /p:Platform=$env:BUILD_PLATFORM /p:AppxBundlePlatforms=$env:BUILD_PLATFORM /p:AppxPackageDir=${env:APPX_PACKAGE_DIR}_$env:BUILD_PLATFORM /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload $env:SOLUTION_FILE_PATH
+        msbuild.exe /m /p:AppxPackageSigningEnabled=false /p:Configuration=$env:BUILD_CONFIGURATION /p:Platform=$env:BUILD_PLATFORM /p:AppxBundlePlatforms=$env:BUILD_PLATFORM /p:AppxPackageDir=${env:APPX_PACKAGE_DIR}_$env:BUILD_PLATFORM /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload $env:SOLUTION_FILE_PATH
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
