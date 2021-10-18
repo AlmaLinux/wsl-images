@@ -53,7 +53,7 @@ jobs:
       env:
         BUILD_PLATFORM: ${{matrix.platform}}
         CERT_PWD: (ConvertTo-SecureString -String ${{secrets.PACKAGE_SIGNING_PASSWORD}} -Force -AsPlainText)
-        CERT_PATH: .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
+        CERT_PATH: D:\a\wsl-images\wsl-images\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
         CERT_FP: ""
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
