@@ -10,7 +10,7 @@
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformMinVersion>10.0.16299.0</WindowsTargetPlatformMinVersion>
     <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
-    <TargetName>AlmaLinux</TargetName>
+    <TargetName>almalinux</TargetName>
     <ProjectName>DistroLauncher-Appx</ProjectName>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
   </PropertyGroup>
@@ -48,6 +48,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
+    <PackageCertificateKeyFile>DistroLauncher-Appx_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxBundle>Always</AppxBundle>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
@@ -58,10 +59,6 @@
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
-    <AppxPackageDir>$(SolutionDir)\$(platform)\$(Configuration)\AlmaLinux-Appx\</AppxPackageDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
@@ -140,12 +137,12 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
-    <CustomBuild Include="$(targetname)">
+    <CustomBuild Include="$(SolutionDir)\$(platform)\$(Configuration)\launcher.exe">
       <FileType>Document</FileType>
       <ExcludedFromBuild>false</ExcludedFromBuild>
       <Message>Copy $(SolutionDir)\$(platform)\$(Configuration)\launcher.exe into $(SolutionDir)\$(platform)\$(Configuration)\$(ProjectName)\$(targetname).exe</Message>
       <Command>copy $(SolutionDir)\$(platform)\$(Configuration)\launcher.exe $(SolutionDir)\$(platform)\$(Configuration)\$(ProjectName)\$(targetname).exe</Command>
-      <Outputs>$(targetname).exe</Outputs>
+      <Outputs>$(SolutionDir)\$(platform)\$(Configuration)\$(ProjectName)\$(targetname).exe</Outputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
