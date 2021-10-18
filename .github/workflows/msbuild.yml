@@ -4,7 +4,7 @@ on: [push]
 
 env:
   # Path to the solution file relative to the root of the project.
-  SOLUTION_FILE_PATH: .
+  SOLUTION_FILE_PATH: .\WSL-DistroLauncher
 
   # Configuration type to build.
   # You can convert this to a build matrix if you need coverage of multiple configuration types.
@@ -36,7 +36,7 @@ jobs:
     - name: Download tar files for x64
       if: matrix.platform == 'x64'
       run: |
-        New-Item -Path .\x64 -ItemType Directory
+        New-Item -Path .\WSL-DistroLauncher\x64 -ItemType Directory
         Invoke-WebRequest -Uri $env:X64_TAR_FILE_ADDRESS -OutFile .\WSL-DistroLauncher\x64\install.tar.gz
         if ((Get-FileHash -Path .\WSL-DistroLauncher\x64\install.tar.gz).Hash -ne "$env:X64_TAR_FILE_HASH") {throw "x64 tar file hash not match."}
       shell: pwsh
