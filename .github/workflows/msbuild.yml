@@ -1,0 +1,64 @@
+name: MSBuild
+
+on: [push]
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: .
+
+  # Configuration type to build.
+  # You can convert this to a build matrix if you need coverage of multiple configuration types.
+  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  BUILD_CONFIGURATION: Release
+
+  APPX_PACKAGE_DIR: AppxPackages
+  X64_TAR_FILE_ADDRESS: https://github.com/AlmaLinux/wsl-images/releases/download/v8.4.3-RC1/install.tar.gz
+  X64_TAR_FILE_HASH: 1c8a3f8fc333c9b828576ffc2da471fb1cdb1af2cac88d28e1a14cf60516ef80
+
+jobs:
+  build:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        platform: [x64]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.3
+      with:
+        vs-prerelease: true
+            
+    - name: Restore NuGet packages
+      run: nuget.exe restore $env:SOLUTION_FILE_PATH
+
+    - name: Download tar files for x64
+      if: matrix.platform == 'x64'
+      run: |
+        New-Item -Path .\x64 -ItemType Directory
+        Invoke-WebRequest -Uri $env:X64_TAR_FILE_ADDRESS -OutFile .\WSL-DistroLauncher\x64\install.tar.gz
+        if ((Get-FileHash -Path .\WSL-DistroLauncher\x64\install.tar.gz).Hash -ne "$env:X64_TAR_FILE_HASH") {throw "x64 tar file hash not match."}
+      shell: pwsh
+
+    - name: Download package signing certificate
+      env:
+        PACKAGE_SIGNING_CERTIFICATE: ${{secrets.PACKAGE_SIGNING_CERTIFICATE}}
+      run: |
+        "$env:PACKAGE_SIGNING_CERTIFICATE" > .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey_Base64.pfx
+        certutil.exe -decode .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey_Base64.pfx .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx 
+      shell: pwsh
+
+    - name: Build
+      env:
+        BUILD_PLATFORM: ${{matrix.platform}}
+      # Add additional options to the MSBuild command line here (like platform or verbosity level).
+      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+      run: |
+        msbuild.exe /m /p:Configuration=$env:BUILD_CONFIGURATION /p:Platform=$env:BUILD_PLATFORM /p:AppxBundlePlatforms=$env:BUILD_PLATFORM /p:AppxPackageDir=${env:APPX_PACKAGE_DIR}_$env:BUILD_PLATFORM /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload $env:SOLUTION_FILE_PATH
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: AppxPackages_${{matrix.platform}}
+        path: WSL-DistroLauncher\DistroLauncher-Appx\AppxPackages_${{matrix.platform}}
