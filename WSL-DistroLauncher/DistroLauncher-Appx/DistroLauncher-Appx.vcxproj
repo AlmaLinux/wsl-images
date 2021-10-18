@@ -48,15 +48,21 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <PackageCertificateKeyFile>DistroLauncher-Appx_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxBundle>Always</AppxBundle>
-    <PackageCertificateThumbprint>03F8E4EC11592527858D3BAEE9B0497ADEF67B17</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>8FB099224B3D3A5DDD89226021174934AE970CE0</PackageCertificateThumbprint>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
-    <AppInstallerUpdateFrequency>1</AppInstallerUpdateFrequency>
+    <AppInstallerUpdateFrequency>0</AppInstallerUpdateFrequency>
     <AppInstallerCheckForUpdateFrequency>OnApplicationRun</AppInstallerCheckForUpdateFrequency>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+    <AppxPackageDir>$(SolutionDir)\$(platform)\$(Configuration)\AlmaLinux-Appx\</AppxPackageDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
