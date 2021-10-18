@@ -48,8 +48,8 @@ jobs:
       run: |
         "$env:CERT_BASE64" > .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey_Base64.txt
         certutil -decode .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey_Base64.txt .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx 
-        Import-PfxCertificate -Password "$env:CERT_PWD -CertStoreLocation Cert:LocalMachine\Trust -FilePath .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
-        Import-PfxCertificate -Password "$env:CERT_PWD -CertStoreLocation Cert:CurrentUser\My -FilePath .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
+        Import-PfxCertificate -Password "$env:CERT_PWD" -CertStoreLocation Cert:LocalMachine\Trust -FilePath .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
+        Import-PfxCertificate -Password "$env:CERT_PWD" -CertStoreLocation Cert:CurrentUser\My -FilePath .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
       shell: pwsh
 
     - name: Build Project and package
