@@ -44,24 +44,25 @@ jobs:
     - name: Download and Install certificate
       env:
         CERT_BASE64: ${{secrets.PACKAGE_SIGNING_CERTIFICATE}}
+        CERT_PWD: (ConvertTo-SecureString -String ${{secrets.PACKAGE_SIGNING_PASSWORD}} -Force -AsPlainText)
       run: |
         "$env:CERT_BASE64" > .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey_Base64.txt
         certutil -decode .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey_Base64.txt .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx 
         $pwd = ConvertTo-SecureString  '${{ secrets.PACKAGE_SIGNING_PASSWORD }}' -AsPlainText -Force
-        Import-PfxCertificate -Password $pwd -CertStoreLocation Cert:LocalMachine\Trust -FilePath .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
-        Import-PfxCertificate -Password $pwd -CertStoreLocation Cert:CurrentUser\My -FilePath .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
+        Import-PfxCertificate -Password "$env:CERT_PWD -CertStoreLocation Cert:LocalMachine\Trust -FilePath .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
+        Import-PfxCertificate -Password "$env:CERT_PWD -CertStoreLocation Cert:CurrentUser\My -FilePath .\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
       shell: pwsh
 
     - name: Build Project and package
       env:
         BUILD_PLATFORM: ${{matrix.platform}}
+        CERT_PWD: (ConvertTo-SecureString -String ${{secrets.PACKAGE_SIGNING_PASSWORD}} -Force -AsPlainText)
         CERT_PATH: D:\a\wsl-images\wsl-images\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx_TemporaryKey.pfx
         CERT_FP: ""
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: |
-        $pwd = ConvertTo-SecureString  '${{ secrets.PACKAGE_SIGNING_PASSWORD }}' -AsPlainText -Force
-        msbuild.exe /m /p:Configuration=$env:BUILD_CONFIGURATION /p:Platform=$env:BUILD_PLATFORM /p:AppxBundlePlatforms=$env:BUILD_PLATFORM /p:AppxPackageDir=${env:APPX_PACKAGE_DIR}_$env:BUILD_PLATFORM /p:AppxBundle=Always /p:PackageCertificatePassword=$pwd /p:UapAppxPackageBuildMode=StoreUpload $env:SOLUTION_FILE_PATH 
+        msbuild.exe /m /p:Configuration=$env:BUILD_CONFIGURATION /p:Platform=$env:BUILD_PLATFORM /p:AppxBundlePlatforms=$env:BUILD_PLATFORM /p:AppxPackageDir=${env:APPX_PACKAGE_DIR}_$env:BUILD_PLATFORM /p:AppxBundle=Always /p:PackageCertificatePassword=$env:CERT_PWD /p:UapAppxPackageBuildMode=StoreUpload $env:SOLUTION_FILE_PATH 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
