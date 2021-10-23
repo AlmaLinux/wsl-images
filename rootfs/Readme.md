@@ -18,7 +18,7 @@ You need an **AlmaLinux system** with following RPM packages installed to run th
 
 This approach can be used in `Windows`, `Mac` or any `Linux` system which has `docker` or `podman` command line installed configured. Issue following command to use `almalinux/ks2rootfs` container to build `rootfs` file in container environment.
 
-Unix/Linux environment support multi line command support, issue following command to build.
+Unix/Linux environment support  line command support, issue following command to build.
 
 ```sh
 docker run --rm --privileged -v "$PWD:/build:z" \
