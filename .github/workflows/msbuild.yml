@@ -48,7 +48,7 @@ jobs:
         Set-Content -Path certificate\certificate.txt -Value '${{ secrets.PACKAGE_SIGNING_CERTIFICATE }}'
         certutil -decode certificate\certificate.txt certificate\certificate.pfx
 
-        $pwd = ConvertTo-SecureString  AlmaLinuxCertificate! -AsPlainText -Force
+        $pwd = ConvertTo-SecureString  'AlmaLinuxCertificate!' -AsPlainText -Force
         Import-PfxCertificate -Password $pwd -CertStoreLocation Cert:LocalMachine\Trust -FilePath certificate\certificate.pfx
         Import-PfxCertificate -Password $pwd -CertStoreLocation Cert:CurrentUser\My -FilePath certificate\certificate.pfx
     
