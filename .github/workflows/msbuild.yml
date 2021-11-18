@@ -1,0 +1,56 @@
+name: MSBuild
+
+on: [push]
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: .\WSL-DistroLauncher
+
+  # Configuration type to build.
+  # You can convert this to a build matrix if you need coverage of multiple configuration types.
+  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  BUILD_CONFIGURATION: Release
+
+  APPX_PACKAGE_DIR: AppxPackages
+  X64_TAR_FILE_ADDRESS: https://github.com/AlmaLinux/wsl-images/releases/download/v8.4.3-RC1/install.tar.gz
+  X64_TAR_FILE_HASH: 1c8a3f8fc333c9b828576ffc2da471fb1cdb1af2cac88d28e1a14cf60516ef80
+
+jobs:
+  build:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        platform: [x64]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.3
+      with:
+        vs-prerelease: true
+            
+    - name: Restore NuGet packages
+      run: nuget.exe restore $env:SOLUTION_FILE_PATH
+
+    - name: Download tar files for x64
+      if: matrix.platform == 'x64'
+      run: |
+        New-Item -Path .\WSL-DistroLauncher\x64 -ItemType Directory
+        Invoke-WebRequest -Uri $env:X64_TAR_FILE_ADDRESS -OutFile .\WSL-DistroLauncher\x64\install.tar.gz
+        if ((Get-FileHash -Path .\WSL-DistroLauncher\x64\install.tar.gz).Hash -ne "$env:X64_TAR_FILE_HASH") {throw "x64 tar file hash not match."}
+      shell: pwsh
+
+    - name: Install certificate
+      shell: powershell
+      run: |
+        New-Item -ItemType directory -Path certificate
+        Set-Content -Path certificate\certificate.txt -Value '${{ secrets.PACKAGE_SIGNING_CERTIFICATE }}'
+        certutil -decode certificate\certificate.txt certificate\certificate.pfx
+
+        $pwd = ConvertTo-SecureString  'AlmaLinuxCertificate!' -AsPlainText -Force
+        Import-PfxCertificate -Password $pwd -CertStoreLocation Cert:LocalMachine\Trust -FilePath certificate\certificate.pfx
+        Import-PfxCertificate -Password $pwd -CertStoreLocation Cert:CurrentUser\My -FilePath certificate\certificate.pfx
+    
+    - name: Build Bundle
+      run:  msbuild .\WSL-DistroLauncher\DistroLauncher.sln /t:Build /m /nr:false /p:Configuration=Release /p:AppxBundle=Always /p:AppxBundlePlatforms="${{ env.AppxBundlePlatforms }}" /p:UapAppxPackageBuildMode=${{ env.UapAppxPackageBuildMode }} -verbosity:normal
