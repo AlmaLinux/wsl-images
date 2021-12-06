@@ -1,0 +1,22 @@
+#!/bin/bash
+echo "Setting up temp work dir ..."
+mkdir -p wsl-temp && cd wsl-temp
+echo "Saving docker/container image ..."
+docker save $1 -o wsltemp.tar
+TWSL=$(tar -tf wsltemp.tar | grep layer)
+TCNT=$(echo $TWSL | tr ' ' '\n' | grep layer | wc -l)
+if [$TCNT -eq 1]; then
+    echo "Extracting rootfs $TWSL ..."
+    tar -xf wsltemp.tar $TWSL
+    mv $TWSL install_$2.tar
+    echo "Compressing rootfs ..."
+    gzip install_$2.tar
+    mv install_$2* ../
+else
+    echo "Image contains $TCNT layers, only single layer image is supported at this time. Use '--squash' option to create single layer image."
+fi
+echo "Perform cleanup ..."
+cd ..
+rm -rf wsl-temp
+F1=$(ls | grep install_$2)
+echo "Task complete. Output rootfs located at $PWD/$F1"
