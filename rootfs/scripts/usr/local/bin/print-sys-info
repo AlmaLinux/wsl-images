@@ -13,11 +13,11 @@ PSA=`ps -Afl | wc -l`
 # time of day
 HOUR=$(date +"%H")
 if [ $HOUR -lt 12  -a $HOUR -ge 0 ]
-then    TIME="morning"
+then    TIME="Morning"
 elif [ $HOUR -lt 17 -a $HOUR -ge 12 ] 
-then    TIME="afternoon"
+then    TIME="Afternoon"
 else 
-    TIME="evening"
+    TIME="Evening"
 fi
 
 #System uptime

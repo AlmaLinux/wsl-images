@@ -69,7 +69,8 @@ RUN mkdir -p /mnt/sys-root; \
     echo '%_install_langs C.utf8' > /mnt/sys-root//etc/rpm/macros.image-language-conf; \
     echo 'LANG="C.utf8"' >  /mnt/sys-root/etc/locale.conf; \
     echo 'container' > /mnt/sys-root/etc/dnf/vars/infra; \
-    echo 'PS1="[\033[01;32m]\u[\033[01;33m]@[\033[01;36m]\h[\033[00m]:[\033[01;34m]\w[\033[00m]$ "' >> /mnt/sys-root//etc/profile.d/sh.local; \
+    echo 'PS1="\[\e[m\][\[\e[m\]\[\e[35m\]\u\[\e[m\]\[\e[33m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]:\[\e[36m\]\w\[\e[m\]\[\e[m\]]\[\e[m\]\\$ "' >> /mnt/sys-root//etc/profile.d/sh.local; \
+    echo 'LANG="C.utf8"' >> /mnt/sys-root//etc/profile.d/sh.local; \
     rm -f /mnt/sys-root/etc/machine-id; \
     touch /mnt/sys-root/etc/machine-id;
 
