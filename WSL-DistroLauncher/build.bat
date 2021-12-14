@@ -38,12 +38,12 @@ if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools\MSBuild\Cu
     set MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
     goto :FOUND_MSBUILD
 )
-if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" (
-    set MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
-    goto :FOUND_MSBUILD
-)
 if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" (
     set MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+    goto :FOUND_MSBUILD
+)
+if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" (
+    set MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
     goto :FOUND_MSBUILD
 )
 if exist "%ProgramFiles(x86)%\MSBuild\14.0\bin" (
@@ -75,7 +75,7 @@ shift
 goto :ARGS_LOOP
 
 :POST_ARGS_LOOP
-%MSBUILD% %~dp0\DistroLauncher.sln /t:%_MSBUILD_TARGET% /m /nr:true /p:Configuration=%_MSBUILD_CONFIG%;Platform=x64 /p:AppxBundlePlatforms=x64 /p:AppxPackageDir=AppxPackages_x64 /p:AppxBundle=Always /p:PackageCertificatePassword=AlmaLinuxCertificate!
+%MSBUILD% %~dp0\DistroLauncher.sln /t:%_MSBUILD_TARGET% /m /nr:true /p:Configuration=%_MSBUILD_CONFIG%;Platform=x64 /p:AppxBundlePlatforms=x64 /p:AppxPackageDir=AppxPackages_x64 /p:AppxBundle=Always
 
 if (%ERRORLEVEL%) == (0) (
     echo.
