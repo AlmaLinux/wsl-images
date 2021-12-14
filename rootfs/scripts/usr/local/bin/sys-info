@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# Author: Bala Raman <srbala@gmail.com>
+# /usr/local/bin/sys-info
+#
+TCPU=`lscpu | grep "Model name" |  awk -F: '{print $2;}' | awk '{ sub(/^[ \t]+/, ""); print }'`
+MEMORY1=`free -t -m | grep "Mem" | awk '{print $4" MB";}'`
+MEMORY2=`free -t -m | grep "Mem" | awk '{print $2" MB";}'`
+MEMORY3=`free -t -m | grep "Swap" | awk '{print $4" MB";}'`
+MEMORY4=`free -t -m | grep "Swap" | awk '{print $2" MB";}'`
+PSA=`ps -Afl | wc -l`
+
+# time of day
+HOUR=$(date +"%H")
+if [ $HOUR -lt 12  -a $HOUR -ge 0 ]
+then    TIME="morning"
+elif [ $HOUR -lt 17 -a $HOUR -ge 12 ] 
+then    TIME="afternoon"
+else 
+    TIME="evening"
+fi
+
+#System uptime
+uptime=`cat /proc/uptime | cut -f1 -d.`
+upDays=$((uptime/60/60/24))
+upHours=$((uptime/60/60%24))
+upMins=$((uptime/60%60))
+upSecs=$((uptime%60))
+
+#System load
+LOAD1=`cat /proc/loadavg | awk {'print $1'}`
+LOAD5=`cat /proc/loadavg | awk {'print $2'}`
+LOAD15=`cat /proc/loadavg | awk {'print $3'}`
+
+echo "
+Good $TIME `whoami`!
+===============================================================================
+ - Hostname............: `uname -n`
+ - Release.............: `cat /etc/system-release`
+===============================================================================
+ - Current user........: `whoami`
+ - CPU Model...........: $TCPU
+ - CPU usage...........: $LOAD1, $LOAD5, $LOAD15 (1, 5, 15 min)
+ - Memory free/total...: $MEMORY1 / $MEMORY2
+ - Swap free/total.....: $MEMORY3 / $MEMORY4
+ - Kernel..............: `uname -r`
+ - Processes...........: $PSA running
+ - System uptime.......: $upDays days $upHours hours $upMins minutes $upSecs seconds
+===============================================================================
+"
