@@ -31,7 +31,7 @@ HRESULT InstallDistribution(bool createUser)
 
     // Delete /etc/resolv.conf to allow WSL to generate a version based on Windows networking information.
     DWORD exitCode;
-    hr = g_wslApi.WslLaunchInteractive(L"/bin/rm /etc/resolv.conf", true, &exitCode);
+    hr = g_wslApi.WslLaunchInteractive(L"rm /etc/resolv.conf", true, &exitCode);
     if (FAILED(hr)) {
         return hr;
     }

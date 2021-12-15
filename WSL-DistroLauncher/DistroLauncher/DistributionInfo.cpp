@@ -9,14 +9,14 @@ bool DistributionInfo::CreateUser(std::wstring_view userName)
 {
     // Create the user account.
     DWORD exitCode;
-    std::wstring commandLine = L"/usr/sbin/useradd -m ";
+    std::wstring commandLine = L"useradd -m ";
     commandLine += userName;
     HRESULT hr = g_wslApi.WslLaunchInteractive(commandLine.c_str(), true, &exitCode);
     if ((FAILED(hr)) || (exitCode != 0)) {
         return false;
     }
 
-    commandLine = L"/usr/bin/passwd ";
+    commandLine = L"passwd ";
     commandLine += userName;
     hr = g_wslApi.WslLaunchInteractive(commandLine.c_str(), true, &exitCode);
     if ((FAILED(hr)) || (exitCode != 0)) {
@@ -24,19 +24,19 @@ bool DistributionInfo::CreateUser(std::wstring_view userName)
     }
 
     // Add the user account to any relevant groups.
-    commandLine = L"/usr/sbin/usermod -aG wheel,adm,cdrom ";
+    commandLine = L"usermod -aG wheel,adm,cdrom ";
     commandLine += userName;
     hr = g_wslApi.WslLaunchInteractive(commandLine.c_str(), true, &exitCode);
     if ((FAILED(hr)) || (exitCode != 0)) {
 
         // Delete the user if the group add command failed.
-        commandLine = L"/usr/sbin/userdel -r ";
+        commandLine = L"userdel -r ";
         commandLine += userName;
         g_wslApi.WslLaunchInteractive(commandLine.c_str(), true, &exitCode);
         return false;
     }
 
-    commandLine = L"/usr/bin/printf '";
+    commandLine = L"printf '";
     commandLine += userName;
     commandLine += L" ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/default_user";
     hr = g_wslApi.WslLaunchInteractive(commandLine.c_str(), true, &exitCode);
@@ -56,7 +56,7 @@ ULONG DistributionInfo::QueryUid(std::wstring_view userName)
     ULONG uid = UID_INVALID;
     if (CreatePipe(&readPipe, &writePipe, &sa, 0)) {
         // Query the UID of the supplied username.
-        std::wstring command = L"/usr/bin/id -u ";
+        std::wstring command = L"id -u ";
         command += userName;
         int returnValue = 0;
         HANDLE child;
