@@ -298,4 +298,4 @@ DistroLauncher/messages.h
 *.dll
 *.exe
 *.tar.gz
-WSL-DistroLauncher/DistroLauncher-Appx/AppxPackages_*
+DistroLauncher-Appx/AppxPackages_*
