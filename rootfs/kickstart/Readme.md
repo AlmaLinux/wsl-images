@@ -1,4 +1,4 @@
-# Building AlmaLinux RootFS
+# Building AlmaLinux RootFS - Deprecated
 
 Creating rootfs using is kickstart file deprecated. Use `Dockerfile` approach with `gen-rootfs` script for easy approach.
 
@@ -24,7 +24,7 @@ Unix/Linux environment support  line command support, issue following command to
 
 ```sh
 docker run --rm --privileged -v "$PWD:/build:z" \
-    -e BUILD_KICKSTART=kickstart/almalinux-8-wsl-depricated.ks \
+    -e BUILD_KICKSTART=kickstart/almalinux-8-wsl-deprecated.ks \
     -e BUILD_ROOTFS=almalinux-8-wsl.x86_64.tar.gz \
     -e BUILD_OUTDIR=result \
     -e BUILD_COMPTYPE gzip \
