@@ -46,7 +46,7 @@ RUN mkdir -p /mnt/sys-root; \
     python3-unbound \
     rdma-core \
     rootfiles \
-    rpm-plugin-systemd-inhibit \
+#    rpm-plugin-systemd-inhibit \
     rsyslog \
     sudo \
     systemd \
@@ -76,13 +76,9 @@ RUN mkdir -p /mnt/sys-root; \
 
 COPY scripts/ /mnt/sys-root/
 
-FROM scratch
+FROM scratch AS system-build2
 
 COPY --from=system-build /mnt/sys-root/ /
-
-ENV LANG=C.utf8 
-
-LABEL MAINTAINER="Bala Raman<srbala@gmail.com>"
 
 RUN systemctl set-default multi-user.target; \
     systemctl mask systemd-remount-fs.service \
@@ -96,10 +92,22 @@ RUN systemctl set-default multi-user.target; \
     systemd-random-seed.service \
     systemd-machine-id-commit.service
 #
+# Rebuild frrom scratch to bypass squash option - old docker compatable
+FROM scratch 
+
+COPY --from=system-build2 . .
+
+ENV LANG=C.utf8 
+
 STOPSIGNAL SIGRTMIN+3
 #
 CMD ["/sbin/init"]
 #
-# build image step       : docker build --squash -t wsl-alma .
-# test & local run step  : docker run --rm -it wsl-alma /bin/bash
+# Use `--squash` option if gen-rootfs complains about multiple layers.
+#
+# build image step       : docker build -t srbala/wsl:alma-amd64 .
+# test & local run step  : docker run --rm -it srbala/wsl:alma-amd64 /bin/bash
+#
+# build image step       : docker build --platform linux/arm64 -t srbala/wsl:alma-arm64 .
+# test & local run step  : docker run --rm -it srbala/wsl:alma-arm64 /bin/bash
 #
