@@ -24,7 +24,7 @@ nohup bash  -c 'dnf update | grep -i summary -A 5'> sys_updates_summary.txt  2>&
 echo -e "determining if there are upgrades to perform.."
 if [[ $( grep -i "Upgrade" sys_updates_summary.txt ) ]];
 then
-   echo -e "Upgrades are avaiable, to upgrade system: dnf upgrade -y"
+   echo -e "Upgrades are available, to upgrade system: dnf upgrade -y"
    echo -e "To view summary file: issue the command - cat or less sys_updates_summary.txt"
 else
    echo -e "\033[33;31m No upgrades available at this time\033[0m"
