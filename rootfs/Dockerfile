@@ -3,7 +3,7 @@ ARG SYSBASE=almalinux
 FROM ${SYSBASE} AS system-build
 
 RUN mkdir -p /mnt/sys-root; \
-    dnf install --installroot /mnt/sys-root --releasever 8 --setopt install_weak_deps=false --nodocs -y \
+    dnf install --installroot /mnt/sys-root --releasever 8 --setopt install_weak_deps=false -y \
     bash \
     binutils \
     coreutils \
@@ -30,6 +30,7 @@ RUN mkdir -p /mnt/sys-root; \
     libpcap \
     libuser \
     make \
+    man \
     nano \    
     ncurses \
     openssl \
