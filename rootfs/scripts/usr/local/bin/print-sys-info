@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Author: Bala Raman <srbala@gmail.com>
+# /usr/local/bin/print-sys-info
+#
+# source print-sys-info
+sys-banner
+sys-info
