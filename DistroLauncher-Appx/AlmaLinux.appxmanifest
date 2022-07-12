@@ -3,7 +3,7 @@
   <Identity Name="AlmaLinuxOSFoundation.AlmaLinux9" Version="9.0.4.0" Publisher="CN=B1A48727-AEB3-4969-B3DE-80C1A9BAB603" ProcessorArchitecture="x64" />
   <mp:PhoneIdentity PhoneProductId="160867c6-4e75-4e36-85c6-1543de07d5f3" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>AlmaLinux 9 WSL</DisplayName>
+    <DisplayName>AlmaLinux 9</DisplayName>
     <PublisherDisplayName>AlmaLinux OS Foundation</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
