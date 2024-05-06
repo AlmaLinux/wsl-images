@@ -15,6 +15,7 @@ RUN mkdir -p /mnt/sys-root; \
     gzip \
     hwdata \
     iptables-libs \
+    iproute \
     iputils \
     jq \
     langpacks-en \
