@@ -14,8 +14,8 @@ RUN mkdir -p /mnt/sys-root; \
     glibc-minimal-langpack \
     gzip \
     hwdata \
-    iptables-libs \
     iproute \
+    iptables-libs \
     iputils \
     jq \
     langpacks-en \
