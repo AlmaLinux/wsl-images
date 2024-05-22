@@ -34,16 +34,16 @@ if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\MSBuild\Cur
     set MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
     goto :FOUND_MSBUILD
 )
-if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe" (
-    set MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
+if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" (
+    set MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
     goto :FOUND_MSBUILD
 )
-if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" (
-    set MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe" (
+    set MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe"
     goto :FOUND_MSBUILD
 )
-if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" (
-    set MSBUILD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
+if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe" (
+    set MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
     goto :FOUND_MSBUILD
 )
 if exist "%ProgramFiles(x86)%\MSBuild\14.0\bin" (
@@ -58,7 +58,7 @@ if exist "%ProgramFiles%\MSBuild\14.0\bin" (
 if %MSBUILD%==() (
     echo "I couldn't find MSBuild on your PC. Make sure it's installed somewhere, and if it's not in the above if statements (in build.bat), add it."
     goto :EXIT
-) 
+)
 :FOUND_MSBUILD
 set _MSBUILD_TARGET=Build
 set _MSBUILD_CONFIG=Debug
@@ -79,7 +79,7 @@ goto :ARGS_LOOP
 
 if (%ERRORLEVEL%) == (0) (
     echo.
-    echo Created appx in %~dp0x64\%_MSBUILD_CONFIG%\DistroLauncher-Appx\
+    echo Created appx in %~dp0x64\%_MSBUILD_CONFIG%\AlmaLinuxOS-9\
     echo.
 )
 

@@ -159,12 +159,12 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="AlmaLinux.appxmanifest" />
+    <AppxManifest Include="AlmaLinuxOS-9.appxmanifest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DistroLauncher-Appx_TemporaryKey.pfx" />
+    <None Include="AlmaLinuxOS-9_TemporaryKey.pfx" />
     <None Include="Package.StoreAssociation.xml" />
-    <None Include="DistroLauncher-Appx_StoreKey.pfx" />
+    <None Include="AlmaLinuxOS-9_StoreKey.pfx" />
     <None Include="..\x64\install.tar.gz" />
   </ItemGroup>
   <ItemGroup>
