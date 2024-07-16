@@ -1,4 +1,4 @@
-ARG SYSBASE=almalinux
+ARG SYSBASE=almalinux:8
 
 FROM ${SYSBASE} AS system-build
 
@@ -19,6 +19,7 @@ RUN mkdir -p /mnt/sys-root; \
     glibc-minimal-langpack \
     gzip \
     hwdata \
+    iproute \
     iptables-libs \
     iputils \
     jq \
@@ -31,7 +32,7 @@ RUN mkdir -p /mnt/sys-root; \
     libuser \
     make \
     man \
-    nano \    
+    nano \
     ncurses \
     openssl \
     openssl-pkcs11 \
@@ -39,7 +40,7 @@ RUN mkdir -p /mnt/sys-root; \
     pciutils \
     pciutils-libs \
     platform-python-pip \
-    procps-ng \ 
+    procps-ng \
     python3-dateutil \
     python3-dbus \
     python3-dnf-plugins-core \
@@ -94,11 +95,11 @@ RUN systemctl set-default multi-user.target; \
     systemd-machine-id-commit.service
 #
 # Rebuild frrom scratch to bypass squash option - old docker compatable
-FROM scratch 
+FROM scratch
 
 COPY --from=system-build2 . .
 
-ENV LANG=C.utf8 
+ENV LANG=C.utf8
 
 STOPSIGNAL SIGRTMIN+3
 #
