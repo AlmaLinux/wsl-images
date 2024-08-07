@@ -166,7 +166,7 @@
       <ExcludedFromBuild>false</ExcludedFromBuild>
       <Command>mc %(FullPath)</Command>
       <Message>Compiling Messages...</Message>
-      <Outputs>%(Filename).rc;%(Filename).h;MSG0409.bin</Outputs>
+      <Outputs>%(Filename).rc;%(Filename).h;MSG00409.bin</Outputs>
     </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
