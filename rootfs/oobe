@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -ue
+
+DEFAULT_GROUPS='wheel,adm,cdrom'
+DEFAULT_UID='1000'
+
+printf 'Please create a default UNIX user account. The username does not need to match your Windows username.\n'
+printf 'For more information visit: https://aka.ms/wslusers\n'
+
+if getent passwd "$DEFAULT_UID" > /dev/null ; then
+    printf 'User account already exists, skipping creation\n'
+    exit 0
+fi
+
+while read -r -p 'Enter new UNIX username: ' username; do
+    # Create the user
+    if useradd -G "$DEFAULT_GROUPS" -u "$DEFAULT_UID" "$username" && passwd "$username"; then
+        break
+    else
+        userdel -r "$username"
+    fi
+done
