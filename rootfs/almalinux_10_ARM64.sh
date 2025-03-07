@@ -2,16 +2,18 @@
 
 set -ue
 
-# Buildah version: 2:1.33.7-3.el9_4
-# Podman version: 4:4.9.4-6.el9_4
-# ShellCheck version: c7611dfcc6ccb320b530a4e9179e6facee96a422
+# Buildah version: 2:1.37.6-1.el9_5
+# Podman version: 4:5.2.2-13.el9_5
+# ShellCheck version: d3001f337aa3f7653a621b302261f4eac01890d0
 # Requirements:
 # - Build tools: dnf -y install @container-management jq
 # - Multi architecture support: sudo podman run --rm --privileged docker.io/aptman/qus:latest -s -- -p aarch64
 
 timestamp=$(date -u '+%Y%m%d')
-build_number="${1:-0}"
+minor_version="${1:-5}"
+build_number="${2:-0}"
 build_version="${timestamp}"."${build_number}"
+output_file=AlmaLinux-10."${minor_version}"_ARM64_"${build_version}".wsl
 
 wsl_builder_ct=$(buildah from --platform=linux/arm64 quay.io/almalinuxorg/almalinux:10)
 wsl_ct=$(buildah from --platform=linux/arm64 scratch)
@@ -127,7 +129,7 @@ buildah rm "$wsl_builder_ct"
 wsl_img=$(buildah commit --squash --rm --manifest wsl:10 "$wsl_ct" wsl:10-ARM64)
 
 # Extract RootFS from the container image
-rm -rfv wsl_9_x64_dir && mkdir wsl_9_x64_dir
+rm -rfv wsl_10_ARM64_dir && mkdir wsl_10_ARM64_dir
 
 buildah push "$wsl_img" oci:wsl_10_ARM64_dir
 
@@ -137,7 +139,9 @@ rootfs=$(jq -r '.layers[] | select(.mediaType == "application/vnd.oci.image.laye
 
 printf 'Root filesystem: %s\n' "$rootfs"
 
-cp -v wsl_10_ARM64_dir/blobs/sha256/"$rootfs" AlmaLinux-10_ARM64_"${build_version}".tar.gz
-cp -v wsl_10_ARM64_dir/blobs/sha256/"$rootfs" AlmaLinux-10_ARM64_"${build_version}".wsl
+cp -v wsl_9_ARM64_dir/blobs/sha256/"$rootfs" "$output_file"
 
-rm -rfv wsl_10_ARM64_dir
+sha256sum "$output_file" > "${output_file}".sha256sum
+
+# Cleanup
+rm -rfv wsl_9_ARM64_dir
