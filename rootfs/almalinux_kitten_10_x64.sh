@@ -2,15 +2,16 @@
 
 set -ue
 
-# Buildah version: 2:1.33.7-3.el9_4
-# Podman version: 4:4.9.4-6.el9_4
-# ShellCheck version: c7611dfcc6ccb320b530a4e9179e6facee96a422
+# Buildah version: 2:1.37.6-1.el9_5
+# Podman version: 4:5.2.2-13.el9_5
+# ShellCheck version: d3001f337aa3f7653a621b302261f4eac01890d0
 # Requirements:
 # - Build tools: dnf -y install @container-management jq
 
 timestamp=$(date -u '+%Y%m%d')
 build_number="${1:-0}"
 build_version="${timestamp}"."${build_number}"
+output_file=AlmaLinux-Kitten-10_x64_"${build_version}".wsl
 
 wsl_builder_ct=$(buildah from quay.io/almalinuxorg/almalinux:10-kitten)
 wsl_ct=$(buildah from scratch)
@@ -126,7 +127,7 @@ buildah rm "$wsl_builder_ct"
 wsl_img=$(buildah commit --squash --rm --manifest wsl:kitten_10 "$wsl_ct" wsl:kitten_10-x64)
 
 # Extract RootFS from the container image
-rm -rfv wsl_9_x64_dir && mkdir wsl_9_x64_dir
+rm -rfv wsl_kitten_10_x64_dir && mkdir wsl_kitten_10_x64_dir
 
 buildah push "$wsl_img" oci:wsl_kitten_10_x64_dir
 
@@ -136,7 +137,9 @@ rootfs=$(jq -r '.layers[] | select(.mediaType == "application/vnd.oci.image.laye
 
 printf 'Root filesystem: %s\n' "$rootfs"
 
-cp -v wsl_kitten_10_x64_dir/blobs/sha256/"$rootfs" AlmaLinux-Kitten-10_x64_"${build_version}".tar.gz
-cp -v wsl_kitten_10_x64_dir/blobs/sha256/"$rootfs" AlmaLinux-Kitten-10_x64_"${build_version}".wsl
+cp -v wsl_kitten_10_x64_dir/blobs/sha256/"$rootfs" "$output_file"
 
+sha256sum "$output_file" > "${output_file}".sha256sum
+
+# Cleanup
 rm -rfv wsl_kitten_10_x64_dir
