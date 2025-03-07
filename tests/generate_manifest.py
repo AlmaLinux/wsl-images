@@ -3,7 +3,7 @@ from json import load, dump
 from pathlib import Path
 
 parser = ArgumentParser()
-parser.add_argument('--distro', choices=['8', '9'], required=True)
+parser.add_argument('--distro', choices=['8', '9', 'kitten_10'], required=True)
 parser.add_argument('--amd64url', required=True)
 parser.add_argument('--amd64sha256', required=True)
 parser.add_argument('--arm64url', required=True)
