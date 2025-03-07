@@ -139,9 +139,9 @@ rootfs=$(jq -r '.layers[] | select(.mediaType == "application/vnd.oci.image.laye
 
 printf 'Root filesystem: %s\n' "$rootfs"
 
-cp -v wsl_9_ARM64_dir/blobs/sha256/"$rootfs" "$output_file"
+cp -v wsl_10_ARM64_dir/blobs/sha256/"$rootfs" "$output_file"
 
 sha256sum "$output_file" > "${output_file}".sha256sum
 
 # Cleanup
-rm -rfv wsl_9_ARM64_dir
+rm -rfv wsl_10_ARM64_dir
