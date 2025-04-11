@@ -96,18 +96,6 @@ buildah copy --chmod 0644 "$wsl_builder_ct" rootfs/terminal-profile.json /rootfs
 buildah copy --from="$wsl_builder_ct" "$wsl_ct" /rootfs /
 
 
-buildah run "$wsl_ct" -- systemctl mask \
-    systemd-remount-fs.service \
-    dev-hugepages.mount \
-    sys-fs-fuse-connections.mount \
-    systemd-logind.service \
-    getty.target \
-    console-getty.service \
-    systemd-udev-trigger.service \
-    systemd-udevd.service \
-    systemd-random-seed.service \
-    systemd-machine-id-commit.service
-
 # https://learn.microsoft.com/en-us/windows/wsl/build-custom-distro#systemd-recommendations
 buildah run "$wsl_ct" -- systemctl mask \
     systemd-resolved.service \
