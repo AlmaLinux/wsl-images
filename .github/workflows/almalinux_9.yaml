@@ -105,7 +105,7 @@ jobs:
               create "v9.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}" \
               --title "AlmaLinux OS 9.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}" \
               --generate-notes \
-              --latest \
+              --latest=false \
               ./*.wsl ./*.sha256sum
   notify_build:
     if: ${{ ! inputs.release && inputs.almalinux_chat_notiy }}
