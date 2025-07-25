@@ -1,0 +1,115 @@
+name: Publish with Pull Request
+on:
+  workflow_dispatch:
+    inputs:
+      almalinux_chat_notiy:
+        description: 'Notify AlmaLinux Chat'
+        default: true
+        type: boolean
+      almalinux_chat_channel:
+        description: 'Channel name on AlmaLinux Chat'
+        default: sigcloud
+        type: string
+jobs:
+  create_publishing_pr:
+    name: Create publishing PR
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Generate distribution manifest
+        run: uv run tools/distribution_manifest_updater.py
+
+      - name: Download upstream distribution manifest
+        run: curl -LO https://raw.githubusercontent.com/microsoft/WSL/refs/heads/master/distributions/DistributionInfo.json
+
+      - name: Compare distribution manifests
+        id: diff_exit_code
+        run: |
+          trap 'echo "diff_exit_code=$?" >> "$GITHUB_OUTPUT"' EXIT
+          git diff --no-index DistributionInfo.json DistributionInfo_generated.json
+        continue-on-error: true
+
+      - name: Checkout WSL repository
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/WSL
+          path: almalinux_wsl
+          token: ${{ secrets.GH_WSL_PAT }}
+
+      - name: Git configure
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        working-directory: ./almalinux_wsl
+
+      - name: Git add upstream remote
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        run: git remote add -f -t master --no-tags microsoft https://github.com/microsoft/WSL.git
+        working-directory: ./almalinux_wsl
+
+      - name: Git remove old publishing branch
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        run: git push -d origin publishing_pr
+        working-directory: ./almalinux_wsl
+        continue-on-error: true
+
+      - name: Git create and checkout to publishing branch
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        run: git checkout -b publishing_pr microsoft/master
+        working-directory: ./almalinux_wsl
+
+      - name: Update distribution manifest
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        run: cp -v DistributionInfo_generated.json almalinux_wsl/distributions/DistributionInfo.json
+
+      - name: Run validation
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        run: |
+          uv run --with-requirements distributions/requirements.txt distributions/validate-modern.py \
+              --repo-path . \
+              --compare-with-branch microsoft/master \
+              --manifest distributions/DistributionInfo.json
+        working-directory: ./almalinux_wsl
+
+      - name: Git commit changes
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        run: |
+          git add ./distributions/DistributionInfo.json
+          git commit -m 'chore(distributions): update almalinux'
+        working-directory: ./almalinux_wsl
+
+      - name: Git push commit
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        run: git push origin publishing_pr
+        working-directory: ./almalinux_wsl
+
+      - name: Create a PR
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        id: create_pr
+        env:
+          GH_TOKEN: ${{ secrets.GH_WSL_PAT }}
+        run: |
+          echo "pr_url=$(gh pr create --repo microsoft/WSL --fill-first \
+              --assignee $GITHUB_ACTOR \
+              --body "This automated release was created by $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          Maintainers: @$GITHUB_ACTOR")" >> "$GITHUB_OUTPUT"
+        working-directory: ./almalinux_wsl
+
+      - name: Notify
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' && inputs.almalinux_chat_notiy }}
+        uses: mattermost/action-mattermost-notify@2.0.0
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
+          MATTERMOST_CHANNEL: ${{ inputs.almalinux_chat_channel }}
+          MATTERMOST_USERNAME: 'github'
+          TEXT: |
+            ##### [PUBLISH]: A submission has been created for the new releases of WSL images
+            ###### Pull Request
+            :almalinux: ${{ steps.create_pr.outputs.pr_url }}
