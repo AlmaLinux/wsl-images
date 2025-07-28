@@ -1,0 +1,167 @@
+name: Build AlmaLinux OS 8 WSL images
+on:
+  workflow_dispatch:
+    inputs:
+      minor_version:
+        description: 'Minor version of AlmaLinux OS 8'
+        default: 10
+        type: number
+      build_number:
+        description: 'Build number of image version'
+        default: 0
+        type: number
+      release:
+        description: 'Release on GitHub'
+        default: false
+        type: boolean
+      almalinux_chat_notiy:
+        description: 'Notify AlmaLinux Chat'
+        default: true
+        type: boolean
+      almalinux_chat_channel:
+        description: 'Channel name on AlmaLinux Chat'
+        default: sigcloud
+        type: string
+jobs:
+  prepare:
+    name: Build timestamp and version
+    runs-on: ubuntu-24.04
+    outputs:
+      timestamp: ${{ steps.timestamp_and_version.outputs.timestamp }}
+      version: ${{ steps.timestamp_and_version.outputs.version }}
+    steps:
+      - name: Generate timestamp and version
+        id: timestamp_and_version
+        run: |
+          timestamp=$(date -u '+%Y%m%d%H%M%S')
+          version=${timestamp:0:8}
+          echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+  build:
+    name: Build images
+    needs: prepare
+    strategy:
+      matrix:
+        architecture:
+          - x64
+          - ARM64
+        runner:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+        exclude:
+          - architecture: x64
+            runner: ubuntu-24.04-arm
+          - architecture: ARM64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build a WSL image
+        run: bash -x rootfs/almalinux_8_${{ matrix.architecture }}.sh ${{ inputs.minor_version}} ${{ inputs.build_number }}
+
+      - name: Upload artifacts to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlmaLinux_8_${{ matrix.architecture }}
+          path: AlmaLinux-8.*_*.wsl*
+
+      - name: Upload artifact to AlmaLinux Cloud object storage
+        if: ${{ ! inputs.release }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.ALMALINUX_CLOUD_BOT_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.ALMALINUX_CLOUD_BOT_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'us-east-1'
+        run: |
+          aws s3 cp . \
+              s3://almalinux-cloud/images/almalinux/8/8.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/ \
+              --recursive \
+              --exclude '*' --include '*.wsl*'
+          aws s3api put-object-tagging \
+              --bucket almalinux-cloud \
+              --key images/almalinux/8/8.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-8.${{ inputs.minor_version }}_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl \
+              --tagging 'TagSet={Key=public,Value=yes}'
+          aws s3api put-object-tagging \
+              --bucket almalinux-cloud \
+              --key images/almalinux/8/8.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-8.${{ inputs.minor_version }}_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum \
+              --tagging 'TagSet={Key=public,Value=yes}'
+  release:
+    if: ${{ inputs.release }}
+    name: Release images on GitHub
+    runs-on: ubuntu-24.04
+    needs:
+      - prepare
+      - build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifacts for release
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release \
+              create "v8.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}" \
+              --title "AlmaLinux OS 8.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}" \
+              --generate-notes \
+              --latest=false \
+              ./*.wsl ./*.sha256sum
+  notify_build:
+    if: ${{ ! inputs.release && inputs.almalinux_chat_notiy }}
+    name: Notify AlmaLinux Chat about test builds
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Notify AlmaLinux Chat
+        env:
+          image_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/8/8.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-8.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          image_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/8/8.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-8.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          checksum_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/8/8.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-8.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+          checksum_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/8/8.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-8.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+        uses: mattermost/action-mattermost-notify@master
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
+          MATTERMOST_CHANNEL: ${{ inputs.almalinux_chat_channel }}
+          MATTERMOST_USERNAME: 'github'
+          TEXT: |
+            ##### [TEST]: AlmaLinux OS 8.${{ inputs.minor_version }} WSL Images [Build](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}): `${{ needs.prepare.outputs.timestamp }}`
+            ###### Images
+            :almalinux: **x64:** [AlmaLinux-8.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64 }})
+            :almalinux: **ARM64:** [AlmaLinux-8.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_ARM64 }})
+            ###### Checksums
+            :lock_with_ink_pen: **x64:** [AlmaLinux-8.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_x64 }})
+            :lock_with_ink_pen: **ARM64:** [AlmaLinux-8.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_ARM64 }})
+  notify_release:
+    name: Notify AlmaLinux Chat about release builds
+    needs:
+      - prepare
+      - release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Notify AlmaLinux Chat
+        env:
+          image_url_x64: ${{ github.server_url }}/${{ github.repository }}/releases/download/v8.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-8.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          image_url_ARM64: ${{ github.server_url }}/${{ github.repository }}/releases/download/v8.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-8.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          checksum_url_x64: ${{ github.server_url }}/${{ github.repository }}/releases/download/v8.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-8.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+          checksum_url_ARM64: ${{ github.server_url }}/${{ github.repository }}/releases/download/v8.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-8.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+        uses: mattermost/action-mattermost-notify@master
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
+          MATTERMOST_CHANNEL: ${{ inputs.almalinux_chat_channel }}
+          MATTERMOST_USERNAME: 'github'
+          TEXT: |
+            ##### [RELEASE]: AlmaLinux OS 8.${{ inputs.minor_version }} WSL Images [Build](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}): `${{ needs.prepare.outputs.timestamp }}`
+            ###### Images
+            :almalinux: **x64:** [AlmaLinux-8.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64 }})
+            :almalinux: **ARM64:** [AlmaLinux-8.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_ARM64 }})
+            ###### Checksums
+            :lock_with_ink_pen: **x64:** [AlmaLinux-8.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_x64 }})
+            :lock_with_ink_pen: **ARM64:** [AlmaLinux-8.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_ARM64 }})
