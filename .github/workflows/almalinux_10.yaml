@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Generate timestamp and version
         id: timestamp_and_version
-        run: |-
+        run: |
           timestamp=$(date -u '+%Y%m%d%H%M%S')
           version=${timestamp:0:8}
           echo "timestamp=$timestamp" >> "$GITHUB_OUTPUT"
@@ -57,31 +57,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Build a WSL image
         run: bash -x rootfs/almalinux_10_${{ matrix.architecture }}.sh ${{ inputs.minor_version}} ${{ inputs.build_number }}
+
       - name: Upload artifacts to GitHub
         uses: actions/upload-artifact@v4
         with:
           name: AlmaLinux_10_${{ matrix.architecture }}
           path: AlmaLinux-10.*_*.wsl*
+
       - name: Upload artifact to AlmaLinux Cloud object storage
         if: ${{ ! inputs.release }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.ALMALINUX_CLOUD_BOT_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.ALMALINUX_CLOUD_BOT_AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: 'us-east-1'
-        run: |-
+        run: |
           aws s3 cp . \
-              s3://almalinux-cloud/images/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/ \
+              s3://almalinux-cloud/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/ \
               --recursive \
               --exclude '*' --include '*.wsl*'
           aws s3api put-object-tagging \
               --bucket almalinux-cloud \
-              --key images/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl \
+              --key images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl \
               --tagging 'TagSet={Key=public,Value=yes}'
           aws s3api put-object-tagging \
               --bucket almalinux-cloud \
-              --key images/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum \
+              --key images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum \
               --tagging 'TagSet={Key=public,Value=yes}'
   release:
     if: ${{ inputs.release }}
@@ -93,14 +96,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Download artifacts for release
         uses: actions/download-artifact@v4
         with:
           merge-multiple: true
+
       - name: Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |-
+        run: |
           gh release \
               create "v10.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}" \
               --title "AlmaLinux OS 10.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}" \
@@ -117,16 +122,16 @@ jobs:
     steps:
       - name: Notify AlmaLinux Chat
         env:
-          image_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
-          image_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
-          checksum_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
-          checksum_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+          image_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          image_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          checksum_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+          checksum_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
         uses: mattermost/action-mattermost-notify@master
         with:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
           MATTERMOST_CHANNEL: ${{ inputs.almalinux_chat_channel }}
           MATTERMOST_USERNAME: 'github'
-          TEXT: |-
+          TEXT: |
             ##### [TEST]: AlmaLinux OS 10.${{ inputs.minor_version }} WSL Images [Build](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}): `${{ needs.prepare.outputs.timestamp }}`
             ###### Images
             :almalinux: **x64:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64 }})
@@ -152,7 +157,7 @@ jobs:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
           MATTERMOST_CHANNEL: ${{ inputs.almalinux_chat_channel }}
           MATTERMOST_USERNAME: 'github'
-          TEXT: |-
+          TEXT: |
             ##### [RELEASE]: AlmaLinux OS 10.${{ inputs.minor_version }} WSL Images [Build](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}): `${{ needs.prepare.outputs.timestamp }}`
             ###### Images
             :almalinux: **x64:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64 }})
