@@ -1,6 +1,45 @@
-# How to build AlmaLinux OS Windows Subsystem for Linux images as a Windows application
+# How to build AlmaLinux OS Windows Subsystem for Linux images
 
-## Requirements
+## WSL format (`.wsl`)
+
+Shell scripts and configuration files are stored on `rootfs` to build RootFS in `.wsl` format.
+
+### Requirements
+- [Buildah](https://github.com/containers/buildah/blob/main/install.md)
+- [jq](https://jqlang.org/download/)
+
+## Build
+
+Each distro and major version has own builder scripts. Each scripts has these positional parameters:
+- `minor_version`: Minor version of AlmaLinux OS 10. By default it's set to latest (e.g. 0 for 10.0).
+- `build_number`: The build number of the version. Default value is the `0` as a first build of a version.
+
+Example: AlmaLinux OS 10 with default minor version (`0` for `10.0`) and build number (e.g. `20250801.0`).
+
+With default values.
+
+```sh
+bash -x rootfs/almalinux_10_x64.sh
+```
+
+With custom values for AlmaLinux OS 10.1.
+
+```sh
+# bash -x rootfs/almalinux_10_x64.sh minor_version build_number
+bash -x rootfs/almalinux_10_x64.sh 1 0
+```
+
+Output: `AlmaLinux-10."${minor_version}"_x64_"${build_version}".wsl`
+
+## Install
+
+```sh
+wsl --install --from-file $IMAGE
+```
+
+## Microsoft App (legacy)
+
+### Requirements
 
 1. Use [WinGet](https://github.com/microsoft/winget-cli) as a package manager to install build tools. Please, consult to the official [documentation](https://learn.microsoft.com/en-us/windows/package-manager/winget/#install-winget) for the installation guide.
 
@@ -47,7 +86,7 @@ to able to install apps outside of Microsoft Store.
 
 ## Extras
 
-Additional tools might be usefuful.
+Additional tools might be useful.
 ```powershell
 winget upgrade --all
 winget install Microsoft.PowerShell Microsoft.WindowsTerminal Microsoft.OpenSSH.Beta Git.Git cURL.cURL jqlang.jq Neovim.Neovim
