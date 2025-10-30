@@ -8,7 +8,7 @@ on:
         type: boolean
       almalinux_chat_channel:
         description: 'Channel name on AlmaLinux Chat'
-        default: sigcloud
+        default: sigcloudci
         type: string
 jobs:
   create_publishing_pr:
