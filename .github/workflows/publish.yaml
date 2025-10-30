@@ -33,14 +33,13 @@ jobs:
           echo "time_stamp=$(date -u '+%H:%M:%S')" >> $GITHUB_ENV
 
       - name: Compare distribution manifests
-        id: diff_exit_code
         run: |
-          trap 'echo "diff_exit_code=$?" >> "$GITHUB_OUTPUT"' EXIT
-          git diff --no-index DistributionInfo.json DistributionInfo_generated.json
-        continue-on-error: true
+          git diff --no-index DistributionInfo.json DistributionInfo_generated.json \
+            && echo "diff_exit_code=0" >> $GITHUB_ENV \
+            || echo "diff_exit_code=$?" >> $GITHUB_ENV
 
       - name: Checkout WSL repository
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         uses: actions/checkout@v4
         with:
           repository: almalinux/WSL
@@ -48,34 +47,34 @@ jobs:
           token: ${{ secrets.GH_WSL_PAT }}
 
       - name: Git configure
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
         working-directory: ./almalinux_wsl
 
       - name: Git add upstream remote
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         run: git remote add -f -t master --no-tags microsoft https://github.com/microsoft/WSL.git
         working-directory: ./almalinux_wsl
 
       - name: Git remove old publishing branch
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         run: git push -d origin publishing_pr
         working-directory: ./almalinux_wsl
         continue-on-error: true
 
       - name: Git create and checkout to publishing branch
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         run: git checkout -b publishing_pr microsoft/master
         working-directory: ./almalinux_wsl
 
       - name: Update distribution manifest
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         run: cp -v DistributionInfo_generated.json almalinux_wsl/distributions/DistributionInfo.json
 
       - name: Run validation
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         run: |
           uv run --with-requirements distributions/requirements.txt distributions/validate-modern.py \
               --repo-path . \
@@ -84,19 +83,19 @@ jobs:
         working-directory: ./almalinux_wsl
 
       - name: Git commit changes
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         run: |
           git add ./distributions/DistributionInfo.json
           git commit -m 'chore(distributions): Almalinux auto-update - ${{ env.date_stamp }} ${{ env.time_stamp }}'
         working-directory: ./almalinux_wsl
 
       - name: Git push commit
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         run: git push origin publishing_pr
         working-directory: ./almalinux_wsl
 
       - name: Create a PR
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
+        if: ${{ env.diff_exit_code == '1' }}
         id: create_pr
         env:
           GH_TOKEN: ${{ secrets.GH_WSL_PAT }}
@@ -108,7 +107,7 @@ jobs:
         working-directory: ./almalinux_wsl
 
       - name: Notify
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' && inputs.almalinux_chat_notify }}
+        if: ${{ env.diff_exit_code == '1' && inputs.almalinux_chat_notify }}
         uses: mattermost/action-mattermost-notify@2.0.0
         with:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
