@@ -2,7 +2,7 @@ name: Publish with Pull Request
 on:
   workflow_dispatch:
     inputs:
-      almalinux_chat_notiy:
+      almalinux_chat_notify:
         description: 'Notify AlmaLinux Chat'
         default: true
         type: boolean
@@ -27,6 +27,11 @@ jobs:
       - name: Download upstream distribution manifest
         run: curl -LO https://raw.githubusercontent.com/microsoft/WSL/refs/heads/master/distributions/DistributionInfo.json
 
+      - name: "Prepare date and time stamps"
+        run: |
+          echo "date_stamp=$(date -u '+%Y%m%d')" >> $GITHUB_ENV
+          echo "time_stamp=$(date -u '+%H:%M:%S')" >> $GITHUB_ENV
+
       - name: Compare distribution manifests
         id: diff_exit_code
         run: |
@@ -38,7 +43,7 @@ jobs:
         if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
         uses: actions/checkout@v4
         with:
-          repository: microsoft/WSL
+          repository: almalinux/WSL
           path: almalinux_wsl
           token: ${{ secrets.GH_WSL_PAT }}
 
@@ -82,7 +87,7 @@ jobs:
         if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' }}
         run: |
           git add ./distributions/DistributionInfo.json
-          git commit -m 'chore(distributions): update almalinux'
+          git commit -m 'chore(distributions): Almalinux auto-update - ${{ env.date_stamp }} ${{ env.time_stamp }}'
         working-directory: ./almalinux_wsl
 
       - name: Git push commit
@@ -96,14 +101,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_WSL_PAT }}
         run: |
-          echo "pr_url=$(gh pr create --repo microsoft/WSL --fill-first \
-              --assignee $GITHUB_ACTOR \
+          echo "pr_url=$(gh pr create --repo microsoft/WSL \
+              --title "Almalinux auto-update - ${{ env.date_stamp }} ${{ env.time_stamp }}" \
               --body "This automated release was created by $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
-          Maintainers: @$GITHUB_ACTOR")" >> "$GITHUB_OUTPUT"
+          Maintainers: cloud-infra@almalinux.org (@AlmaLinux)")" >> "$GITHUB_OUTPUT"
         working-directory: ./almalinux_wsl
 
       - name: Notify
-        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' && inputs.almalinux_chat_notiy }}
+        if: ${{ steps.diff_exit_code.outputs.diff_exit_code == '1' && inputs.almalinux_chat_notify }}
         uses: mattermost/action-mattermost-notify@2.0.0
         with:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
