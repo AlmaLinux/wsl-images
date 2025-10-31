@@ -60,11 +60,27 @@ def get_releases(gh_org, gh_repo):
     }
     gh_api_releases = f'{gh_api}/repos/{gh_org}/{gh_repo}/releases'
 
-    gh_api_versions = get(f'{gh_api}/versions', headers=gh_api_headers).json()
-    if gh_api_versions[0] != gh_api_version:
-        logger.warning(
-            'A new version of the GitHub REST API is available. Please update to the new version.'
-        )
+    try:
+        gh_api_versions_response = get(f'{gh_api}/versions', headers=gh_api_headers)
+        gh_api_versions_response.raise_for_status()
+        gh_api_versions = gh_api_versions_response.json()
+
+        # Handle different possible response structures
+        current_version = None
+        if isinstance(gh_api_versions, list) and len(gh_api_versions) > 0:
+            # If it's a list, get the first element
+            current_version = gh_api_versions[0]
+        elif isinstance(gh_api_versions, dict):
+            # If it's a dict, try common keys for current/latest version
+            current_version = gh_api_versions.get('current') or gh_api_versions.get('latest') or gh_api_versions.get('default')
+
+        if current_version and current_version != gh_api_version:
+            logger.warning(
+                f'A new version of the GitHub REST API is available: {current_version}. '
+                f'Currently using: {gh_api_version}. Please update to the new version.'
+            )
+    except (HTTPError, KeyError, TypeError) as e:
+        logger.warning(f'Could not check GitHub API version: {e}. Continuing with current version: {gh_api_version}')
 
     try:
         response_releases = get(
@@ -132,14 +148,14 @@ def get_release_assets_by_distro(distro_name, distro_release):
         if 'x64' in asset['name']:
             if asset['name'].endswith('.wsl'):
                 x64_image_url = asset['browser_download_url']
-            else:
+            elif asset['name'].endswith('.wsl.sha256sum'):
                 x64_image_checksum = get(asset['browser_download_url']).text.partition(
                     ' '
                 )[0]
-        else:
+        elif 'ARM64' in asset['name']:
             if asset['name'].endswith('.wsl'):
                 arm64_image_url = asset['browser_download_url']
-            else:
+            elif asset['name'].endswith('.wsl.sha256sum'):
                 arm64_image_checksum = get(
                     asset['browser_download_url']
                 ).text.partition(' ')[0]
