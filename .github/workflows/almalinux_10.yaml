@@ -4,7 +4,7 @@ on:
     inputs:
       minor_version:
         description: 'Minor version of AlmaLinux OS 10'
-        default: 0
+        default: 1
         type: number
       build_number:
         description: 'Build number of image version'
