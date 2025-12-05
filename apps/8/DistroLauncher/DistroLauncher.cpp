@@ -36,22 +36,6 @@ HRESULT InstallDistribution(bool createUser)
         return hr;
     }
 
-    // Create a user account.
-    if (createUser) {
-        Helpers::PrintMessage(MSG_CREATE_USER_PROMPT);
-        std::wstring userName;
-        do {
-            userName = Helpers::GetUserInput(MSG_ENTER_USERNAME, 32);
-
-        } while (!DistributionInfo::CreateUser(userName));
-
-        // Set this user account as the default.
-        hr = SetDefaultUser(userName);
-        if (FAILED(hr)) {
-            return hr;
-        }
-    }
-
     return hr;
 }
 
