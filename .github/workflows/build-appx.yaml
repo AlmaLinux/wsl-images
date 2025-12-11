@@ -1,0 +1,256 @@
+name: Build AlmaLinux OS .appx and .appxbundle
+on:
+  workflow_dispatch:
+    inputs:
+      version_major:
+        description: 'AlmaLinux major version'
+        required: true
+        default: '10'
+        type: choice
+        options:
+          - 10
+          - 9
+          - 8
+
+      store_as_artifact:
+        description: "Store .appx and bundle to the workflow Artifacts"
+        required: true
+        type: boolean
+        default: false
+
+      upload_to_s3:
+        description: "Upload to S3 Bucket"
+        required: true
+        type: boolean
+        default: true
+
+      notify_mattermost:
+        description: "Send notification to Mattermost"
+        required: true
+        type: boolean
+        default: true
+
+      almalinux_chat_channel:
+        description: 'Channel name on Mattermost Chat'
+        default: sigcloudci
+        type: string
+
+env:
+  GH_TOKEN: ${{ secrets.GH_WSL_PAT }}
+
+jobs:
+  build:
+    name: AlmaLinux ${{ inputs.version_major }} .appx and .appxbundle
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set environment variables
+        shell: powershell
+        run: |
+          # Microsoft Visual Studio 2022 Enterprise MSBuild path
+          echo 'MSBUILD=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe' >> $env:GITHUB_ENV
+
+          # Set TIMESTAMP environment variable in format YYYYMMDDHHMMSS
+          $timestamp = [DateTime]::UtcNow.ToString("yyyyMMddHHmmss")
+          echo "TIMESTAMP=$timestamp" >> $env:GITHUB_ENV
+
+      - name: Update Manifest Version (Keep Major.Minor)
+        shell: powershell
+        run: |
+          $ManifestPath = "apps/${{ inputs.version_major }}/AlmaLinux-${{ inputs.version_major }}/AlmaLinux-${{ inputs.version_major }}.appxmanifest"
+
+          # Load the XML
+          [xml]$xml = Get-Content $ManifestPath
+
+          # Parse the current version (e.g., "10.1.5.0")
+          $CurrentVersionStr = $xml.Package.Identity.Version
+          $VersionParts = $CurrentVersionStr.Split('.')
+
+          $Major = $VersionParts[0]
+          $Minor = $VersionParts[1]
+
+          # Construct the new version
+          # Format: Major.Minor.RunNumber.0
+          $NewVersion = "$Major.$Minor.${{ github.run_number }}.0"
+
+          Write-Host "Current Version: $CurrentVersionStr"
+          Write-Host "New Version:     $NewVersion"
+
+          # Update and Save
+          $xml.Package.Identity.Version = $NewVersion
+          $xml.Save($ManifestPath)
+
+          # Export the NEW_VERSION and AWS_S3_PATH environment variables
+          echo "NEW_VERSION=$NewVersion" >> $env:GITHUB_ENV
+          echo "AWS_S3_PATH=images/${{ inputs.version_major }}/$Major.$Minor/wsl/${{ env.TIMESTAMP }}" >> $env:GITHUB_ENV
+          echo "RELEASE_STRING=AlmaLinux OS ${{ inputs.version_major }}" >> $env:GITHUB_ENV
+
+      - name: Download WSL images from GitHub Releases
+        run: |
+          # Get the latest release tag for the AlmaLinux major version
+          $Release = gh release list --repo almalinux/wsl-images --json tagName | jq -r 'map(select(.tagName | startswith("v${{ inputs.version_major }}."))) | first.tagName'
+          Write-Host "Download WSL images from GitHub Releases: $Release"
+
+          # Download the WSL images from the GitHub Releases for specific major version's Release tag
+          gh release download $Release --repo almalinux/wsl-images --pattern 'AlmaLinux-${{ inputs.version_major }}.*.wsl'
+
+          Write-Host "Create directories and move WSL images to them"
+          mkdir "apps\${{ inputs.version_major }}\x64"
+          mkdir "apps\${{ inputs.version_major }}\ARM64"
+          Move-Item -Path "AlmaLinux-${{ inputs.version_major }}*x64*.wsl" -Destination "apps\${{ inputs.version_major }}\x64\install.tar.gz"
+          Move-Item -Path "AlmaLinux-${{ inputs.version_major }}*ARM64*.wsl" -Destination "apps\${{ inputs.version_major }}\ARM64\install.tar.gz"
+
+      - name: Generate Signing Certificate
+        shell: powershell
+        run: |
+          # Define paths
+          $ManifestPath = "apps/${{ inputs.version_major }}/AlmaLinux-${{ inputs.version_major }}/AlmaLinux-${{ inputs.version_major }}.appxmanifest"
+          $PfxPath = "apps/${{ inputs.version_major }}/AlmaLinux-${{ inputs.version_major }}/AlmaLinux-${{ inputs.version_major }}_TemporaryKey.pfx"
+          $Password = "${{ secrets.PFX_PASSWORD }}"
+
+          # Extract the Publisher CN from the Manifest
+          [xml]$manifest = Get-Content $ManifestPath
+          $Publisher = $manifest.Package.Identity.Publisher
+          Write-Host "Detected Publisher: $Publisher"
+
+          # Create the Self-Signed Certificate
+          # OID 1.3.6.1.5.5.7.3.3 is required for Code Signing
+          $cert = New-SelfSignedCertificate `
+            -Type Custom `
+            -Subject $Publisher `
+            -KeyUsage DigitalSignature `
+            -FriendlyName "GitHub Actions CI Cert" `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+
+          # Export to PFX
+          $passwordSecure = ConvertTo-SecureString -String $Password -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath $PfxPath -Password $passwordSecure
+
+      - name: Build x64 binary
+        run: |
+          $Root = Get-Location
+
+          & "${{ env.MSBUILD }}" `
+            "$Root\apps\${{ inputs.version_major }}\DistroLauncher\DistroLauncher.vcxproj" `
+            /t:Rebuild `
+            /p:Configuration=Release `
+            /p:Platform=x64 `
+            /p:WindowsTargetPlatformVersion=10.0 `
+            /p:OutDir="$Root\x64\Release\\" `
+            /p:SolutionDir="$Root\\"
+
+      - name: Build ARM64 binary
+        run: |
+          $Root = Get-Location
+
+          & "${{ env.MSBUILD }}" `
+            "$Root\apps\${{ inputs.version_major }}\DistroLauncher\DistroLauncher.vcxproj" `
+            /t:Rebuild `
+            /p:Configuration=Release `
+            /p:Platform=ARM64 `
+            /p:WindowsTargetPlatformVersion=10.0 `
+            /p:OutDir="$Root\ARM64\Release\\" `
+            /p:SolutionDir="$Root\\"
+
+      - name: Build Bundle
+        run: |
+          $Root = Get-Location
+
+          & "${{ env.MSBUILD }}" `
+            "$Root\apps\${{ inputs.version_major }}\AlmaLinux-${{ inputs.version_major }}\AlmaLinux-${{ inputs.version_major }}.vcxproj" `
+            /t:Build `
+            /p:Configuration=Release `
+            /p:Platform=x64 `
+            /p:AppxBundle=Always `
+            /p:AppxBundlePlatforms="x64|arm64" `
+            /p:WindowsTargetPlatformVersion=10.0 `
+            /p:SolutionDir="$Root\\" `
+            /p:PackageCertificatePassword="${{ secrets.PFX_PASSWORD }}"
+
+
+      - name: Move .appx and .appxbundle to the current directory
+        run: |
+          $Root = Get-Location
+
+          Move-Item -Path "x64\Release\AlmaLinux-${{ inputs.version_major }}\AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64.appx" -Destination "$Root\"
+          Move-Item -Path "x64\Release\AlmaLinux-${{ inputs.version_major }}\arm64\AlmaLinux-${{ inputs.version_major }}\AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_arm64.appx" -Destination "$Root\"
+          Move-Item -Path "AppPackages\AlmaLinux-${{ inputs.version_major }}\AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_Test\AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64_arm64.appxbundle" -Destination "$Root\"
+
+      - name: Upload build artifacts
+        if: inputs.store_as_artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64-arm64_appx-appxbundle
+          path: |
+            AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64.appx
+            AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_arm64.appx
+            AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64_arm64.appxbundle
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        if: inputs.upload_to_s3
+        with:
+          aws-access-key-id: ${{ secrets.ALMALINUX_CLOUD_BOT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ALMALINUX_CLOUD_BOT_AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'us-east-1'
+
+      - name: Publish to S3 Bucket and put object tagging with aws CLI
+        if: inputs.upload_to_s3
+        shell: bash
+        run: |
+          # Publish to S3 Bucket and put object tagging with aws CLI
+          for object in AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64.appx AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_arm64.appx AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64_arm64.appxbundle; do
+            aws s3 cp ${object} s3://almalinux-cloud/${{ env.AWS_S3_PATH }}/
+            aws s3api put-object-tagging --bucket almalinux-cloud --key ${{ env.AWS_S3_PATH }}/${object} --tagging 'TagSet={Key=public,Value=yes}'
+          done
+
+      - name: Print workflow summary
+        uses: actions/github-script@v7
+        env:
+          upload_to_s3: ${{ inputs.upload_to_s3 || 'false' }}
+        with:
+          result-encoding: string
+          script: |
+            const summary = core.summary
+              .addRaw('**${{ env.RELEASE_STRING }}** WSL applications version `${{ env.NEW_VERSION }}` build `${{ env.TIMESTAMP }}`\n');;
+            if (process.env.upload_to_s3 === 'true') {
+              summary
+                .addRaw('S3 Bucket download URLs:\n')
+                .addLink('AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64.appx', 'https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/${{ env.AWS_S3_PATH }}/AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64.appx')
+                .addLink('AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_arm64.appx', 'https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/${{ env.AWS_S3_PATH }}/AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_arm64.appx')
+                .addLink('AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64_arm64.appxbundle', 'https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/${{ env.AWS_S3_PATH }}/AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64_arm64.appxbundle')
+            }
+            summary.write();
+
+      - name: Prepare Mattermost notification message
+        if: inputs.notify_mattermost
+        shell: bash
+        run: |
+          {
+            echo 'MATTERMOST_NOTIFICATION_MESSAGE<<EOF'
+
+            echo ":almalinux: **${{ env.RELEASE_STRING }}** WSL applications version \`${{ env.NEW_VERSION }}\` build \`${{ env.TIMESTAMP }}\`, by the GitHub [Action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            if [ "${{ inputs.store_as_artifact }}" = "true" -a "${{ inputs.upload_to_s3 }}" = "false" ]; then
+              echo "- x64 and ARM64 applications and bundle [zipped]: [AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64-arm64_appx-appxbundle](${{ steps.upload-artifact.outputs.artifact-url }})"
+            fi
+            if [ "${{ inputs.upload_to_s3 }}" = "true" ]; then
+              echo "- x64 application: [AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64.appx](https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/${{ env.AWS_S3_PATH }}/AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64.appx)"
+              echo "- ARM64 application: [AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_arm64.appx](https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/${{ env.AWS_S3_PATH }}/AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_arm64.appx)"
+              echo "- Appx bundle: [AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64_arm64.appxbundle](https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/${{ env.AWS_S3_PATH }}/AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64_arm64.appxbundle)"
+            fi
+
+            echo EOF
+          } >> "$GITHUB_ENV"
+
+      - name: Send notification to Mattermost
+        uses: mattermost/action-mattermost-notify@master
+        if: inputs.notify_mattermost
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
+          MATTERMOST_CHANNEL: ${{ inputs.almalinux_chat_channel }}
+          MATTERMOST_USERNAME: 'github'
+          TEXT: ${{ env.MATTERMOST_NOTIFICATION_MESSAGE }}
