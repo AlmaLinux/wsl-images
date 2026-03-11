@@ -98,15 +98,12 @@ buildah copy --from="$wsl_builder_ct" "$wsl_ct" /rootfs /
 
 
 # https://learn.microsoft.com/en-us/windows/wsl/build-custom-distro#systemd-recommendations
+# Note: systemd-tmpfiles-* services are not masked to allow creation of runtime
+# directories like /run/postgresql at boot (see issue #62)
 buildah run "$wsl_ct" -- systemctl mask \
     systemd-resolved.service \
     systemd-networkd.service \
     NetworkManager.service \
-    systemd-tmpfiles-setup.service \
-    systemd-tmpfiles-clean.service \
-    systemd-tmpfiles-clean.timer \
-    systemd-tmpfiles-setup-dev-early.service \
-    systemd-tmpfiles-setup-dev.service \
     tmp.mount
 
 
