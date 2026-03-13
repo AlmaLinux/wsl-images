@@ -44,7 +44,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set environment variables
         shell: powershell
@@ -182,7 +182,7 @@ jobs:
       - name: Upload build artifacts
         if: inputs.store_as_artifact
         id: upload-artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64-arm64_appx-appxbundle
           path: |
@@ -191,7 +191,7 @@ jobs:
             AlmaLinux-${{ inputs.version_major }}_${{ env.NEW_VERSION }}_x64_arm64.appxbundle
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4.0.2
+        uses: aws-actions/configure-aws-credentials@v6
         if: inputs.upload_to_s3
         with:
           aws-access-key-id: ${{ secrets.ALMALINUX_CLOUD_BOT_AWS_ACCESS_KEY_ID }}
@@ -209,7 +209,7 @@ jobs:
           done
 
       - name: Print workflow summary
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           upload_to_s3: ${{ inputs.upload_to_s3 || 'false' }}
         with:
