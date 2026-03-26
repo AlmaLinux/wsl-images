@@ -145,7 +145,7 @@ def get_release_assets_by_distro(distro_name, distro_release):
     arm64_image_checksum = ''
 
     for asset in distro_release['assets']:
-        if 'x64' in asset['name']:
+        if 'x64' in asset['name'] and 'x64_v2' not in asset['name']:
             if asset['name'].endswith('.wsl'):
                 x64_image_url = asset['browser_download_url']
             elif asset['name'].endswith('.wsl.sha256sum'):
