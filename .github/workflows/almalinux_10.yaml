@@ -44,12 +44,15 @@ jobs:
       matrix:
         architecture:
           - x64
+          - x64_v2
           - ARM64
         runner:
           - ubuntu-24.04
           - ubuntu-24.04-arm
         exclude:
           - architecture: x64
+            runner: ubuntu-24.04-arm
+          - architecture: x64_v2
             runner: ubuntu-24.04-arm
           - architecture: ARM64
             runner: ubuntu-24.04
@@ -123,8 +126,10 @@ jobs:
       - name: Notify AlmaLinux Chat
         env:
           image_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          image_url_x64_v2: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
           image_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
           checksum_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+          checksum_url_x64_v2: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
           checksum_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux/10/10.${{ inputs.minor_version }}/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
         uses: mattermost/action-mattermost-notify@master
         with:
@@ -135,9 +140,11 @@ jobs:
             ##### [TEST]: AlmaLinux OS 10.${{ inputs.minor_version }} WSL Images [Build](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}): `${{ needs.prepare.outputs.timestamp }}`
             ###### Images
             :almalinux: **x64:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64 }})
+            :almalinux: **x64_v2:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64_v2 }})
             :almalinux: **ARM64:** [AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_ARM64 }})
             ###### Checksums
             :lock_with_ink_pen: **x64:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_x64 }})
+            :lock_with_ink_pen: **x64_v2:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_x64_v2 }})
             :lock_with_ink_pen: **ARM64:** [AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_ARM64 }})
   notify_release:
     name: Notify AlmaLinux Chat about release builds
@@ -149,8 +156,10 @@ jobs:
       - name: Notify AlmaLinux Chat
         env:
           image_url_x64: ${{ github.server_url }}/${{ github.repository }}/releases/download/v10.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          image_url_x64_v2: ${{ github.server_url }}/${{ github.repository }}/releases/download/v10.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
           image_url_ARM64: ${{ github.server_url }}/${{ github.repository }}/releases/download/v10.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
           checksum_url_x64: ${{ github.server_url }}/${{ github.repository }}/releases/download/v10.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+          checksum_url_x64_v2: ${{ github.server_url }}/${{ github.repository }}/releases/download/v10.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-10.${{ inputs.minor_version }}_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
           checksum_url_ARM64: ${{ github.server_url }}/${{ github.repository }}/releases/download/v10.${{ inputs.minor_version }}.${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}/AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
         uses: mattermost/action-mattermost-notify@master
         with:
@@ -161,7 +170,9 @@ jobs:
             ##### [RELEASE]: AlmaLinux OS 10.${{ inputs.minor_version }} WSL Images [Build](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}): `${{ needs.prepare.outputs.timestamp }}`
             ###### Images
             :almalinux: **x64:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64 }})
+            :almalinux: **x64_v2:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64_v2 }})
             :almalinux: **ARM64:** [AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_ARM64 }})
             ###### Checksums
             :lock_with_ink_pen: **x64:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_x64 }})
+            :lock_with_ink_pen: **x64_v2:** [AlmaLinux-10.${{ inputs.minor_version }}_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_x64_v2 }})
             :lock_with_ink_pen: **ARM64:** [AlmaLinux-10.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum](${{ env.checksum_url_ARM64 }})
