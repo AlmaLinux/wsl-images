@@ -74,16 +74,16 @@ jobs:
           AWS_DEFAULT_REGION: 'us-east-1'
         run: |
           aws s3 cp . \
-              s3://almalinux-cloud/images/almalinux-kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/ \
+              s3://almalinux-cloud/images/kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/ \
               --recursive \
               --exclude '*' --include '*.wsl*'
           aws s3api put-object-tagging \
               --bucket almalinux-cloud \
-              --key images/almalinux-kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl \
+              --key images/kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl \
               --tagging 'TagSet={Key=public,Value=yes}'
           aws s3api put-object-tagging \
               --bucket almalinux-cloud \
-              --key images/almalinux-kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum \
+              --key images/kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_${{ matrix.architecture }}_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum \
               --tagging 'TagSet={Key=public,Value=yes}'
   release:
     if: ${{ inputs.release }}
@@ -121,12 +121,12 @@ jobs:
     steps:
       - name: Notify AlmaLinux Chat
         env:
-          image_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux-kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
-          image_url_x64_v2: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux-kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
-          image_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux-kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
-          checksum_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux-kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
-          checksum_url_x64_v2: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux-kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
-          checksum_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/almalinux-kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+          image_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          image_url_x64_v2: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          image_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl
+          checksum_url_x64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+          checksum_url_x64_v2: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_x64_v2_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
+          checksum_url_ARM64: https://almalinux-cloud.s3-accelerate.dualstack.amazonaws.com/images/kitten/10/wsl/${{ needs.prepare.outputs.timestamp }}/AlmaLinux-Kitten-10_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl.sha256sum
         uses: mattermost/action-mattermost-notify@master
         with:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
