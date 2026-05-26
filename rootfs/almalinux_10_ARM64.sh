@@ -10,7 +10,7 @@ set -ue
 # - Multi architecture support: sudo podman run --rm --privileged docker.io/aptman/qus:latest -s -- -p aarch64
 
 timestamp=$(date -u '+%Y%m%d')
-minor_version="${1:-5}"
+minor_version="${1:-2}"
 build_number="${2:-0}"
 build_version="${timestamp}"."${build_number}"
 output_file=AlmaLinux-10."${minor_version}"_ARM64_"${build_version}".wsl

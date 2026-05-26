@@ -11,10 +11,10 @@ Shell scripts and configuration files are stored on `rootfs` to build RootFS in 
 ## Build
 
 Each distro and major version has own builder scripts. Each scripts has these positional parameters:
-- `minor_version`: Minor version of AlmaLinux OS 10. By default it's set to latest (e.g. 0 for 10.0).
+- `minor_version`: Minor version of AlmaLinux OS 10. By default it's set to latest (e.g. 2 for 10.2).
 - `build_number`: The build number of the version. Default value is the `0` as a first build of a version.
 
-Example: AlmaLinux OS 10 with default minor version (`0` for `10.0`) and build number (e.g. `20250801.0`).
+Example: AlmaLinux OS 10 with default minor version (`2` for `10.2`) and build number (e.g. `20250801.0`).
 
 With default values.
 
