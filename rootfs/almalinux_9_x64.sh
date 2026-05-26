@@ -9,7 +9,7 @@ set -ue
 # - Build tools: dnf -y install @container-management jq
 
 timestamp=$(date -u '+%Y%m%d')
-minor_version="${1:-5}"
+minor_version="${1:-8}"
 build_number="${2:-0}"
 build_version="${timestamp}"."${build_number}"
 output_file=AlmaLinux-9."${minor_version}"_x64_"${build_version}".wsl
