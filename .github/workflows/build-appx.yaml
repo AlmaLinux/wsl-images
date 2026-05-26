@@ -56,20 +56,28 @@ jobs:
           $timestamp = [DateTime]::UtcNow.ToString("yyyyMMddHHmmss")
           echo "TIMESTAMP=$timestamp" >> $env:GITHUB_ENV
 
-      - name: Update Manifest Version (Keep Major.Minor)
+      - name: Update Manifest Version from latest WSL image release
         shell: powershell
         run: |
+          # Get the latest WSL image release tag for the AlmaLinux major version
+          # (tag format: v<Major>.<Minor>.<YYYYMMDD>.<BuildNumber>)
+          $TagPrefix = "v${{ inputs.version_major }}."
+          $Releases = gh release list --repo almalinux/wsl-images --json tagName | ConvertFrom-Json
+          $Release = ($Releases | Where-Object { $_.tagName.StartsWith($TagPrefix) } | Select-Object -First 1).tagName
+          Write-Host "Latest WSL image release tag: $Release"
+
+          # Parse Major.Minor from the release tag so the .appx version tracks
+          # the actual WSL image version (e.g., v9.8.20260526.0 -> 9.8).
+          $TagParts = $Release.TrimStart('v').Split('.')
+          $Major = $TagParts[0]
+          $Minor = $TagParts[1]
+
           $ManifestPath = "apps/${{ inputs.version_major }}/AlmaLinux-${{ inputs.version_major }}/AlmaLinux-${{ inputs.version_major }}.appxmanifest"
 
           # Load the XML
           [xml]$xml = Get-Content $ManifestPath
 
-          # Parse the current version (e.g., "10.1.5.0")
           $CurrentVersionStr = $xml.Package.Identity.Version
-          $VersionParts = $CurrentVersionStr.Split('.')
-
-          $Major = $VersionParts[0]
-          $Minor = $VersionParts[1]
 
           # Construct the new version
           # Format: Major.Minor.RunNumber.0
@@ -82,25 +90,24 @@ jobs:
           $xml.Package.Identity.Version = $NewVersion
           $xml.Save($ManifestPath)
 
-          # Export the NEW_VERSION and AWS_S3_PATH environment variables
+          # Export environment variables for downstream steps
           echo "NEW_VERSION=$NewVersion" >> $env:GITHUB_ENV
           echo "AWS_S3_PATH=images/${{ inputs.version_major }}/$Major.$Minor/wsl/${{ env.TIMESTAMP }}" >> $env:GITHUB_ENV
           echo "RELEASE_STRING=AlmaLinux OS ${{ inputs.version_major }}" >> $env:GITHUB_ENV
+          echo "RELEASE_TAG=$Release" >> $env:GITHUB_ENV
 
       - name: Download WSL images from GitHub Releases
         run: |
-          # Get the latest release tag for the AlmaLinux major version
-          $Release = gh release list --repo almalinux/wsl-images --json tagName | jq -r 'map(select(.tagName | startswith("v${{ inputs.version_major }}."))) | first.tagName'
-          Write-Host "Download WSL images from GitHub Releases: $Release"
+          Write-Host "Download WSL images from GitHub Releases: ${{ env.RELEASE_TAG }}"
 
-          # Download the WSL images from the GitHub Releases for specific major version's Release tag
-          gh release download $Release --repo almalinux/wsl-images --pattern 'AlmaLinux-${{ inputs.version_major }}.*.wsl'
+          # Download the WSL images from the GitHub Releases for the resolved release tag
+          gh release download ${{ env.RELEASE_TAG }} --repo almalinux/wsl-images --pattern 'AlmaLinux-${{ inputs.version_major }}.*.wsl'
 
           Write-Host "Create directories and move WSL images to them"
           mkdir "apps\${{ inputs.version_major }}\x64"
           mkdir "apps\${{ inputs.version_major }}\ARM64"
-          Move-Item -Path "AlmaLinux-${{ inputs.version_major }}*x64*.wsl" -Destination "apps\${{ inputs.version_major }}\x64\install.tar.gz"
-          Move-Item -Path "AlmaLinux-${{ inputs.version_major }}*ARM64*.wsl" -Destination "apps\${{ inputs.version_major }}\ARM64\install.tar.gz"
+          Move-Item -Path "AlmaLinux-${{ inputs.version_major }}*_x64_[0-9]*.wsl" -Destination "apps\${{ inputs.version_major }}\x64\install.tar.gz"
+          Move-Item -Path "AlmaLinux-${{ inputs.version_major }}*_ARM64_[0-9]*.wsl" -Destination "apps\${{ inputs.version_major }}\ARM64\install.tar.gz"
 
       - name: Generate Signing Certificate
         shell: powershell
