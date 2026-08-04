@@ -1,4 +1,6 @@
 name: Build AlmaLinux OS 9 WSL images
+run-name: >-
+  Build AlmaLinux OS 9 WSL images${{ inputs.pungi_repos && ' (PUNGI)' || '' }}
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +12,10 @@ on:
         description: 'Build number of image version'
         default: 0
         type: number
+      pungi_repos:
+        description: 'Build from PUNGI pre-release repositories instead of the public ones'
+        default: false
+        type: boolean
       release:
         description: 'Release on GitHub'
         default: false
@@ -57,6 +63,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Enable PUNGI repositories
+        if: inputs.pungi_repos
+        run: |
+          # Rewrite the rootfs build scripts to install from the PUNGI
+          # pre-release composes instead of the public repositories.
+          bash tools/pungi-repos.sh
 
       - name: Build a WSL image
         run: bash -x rootfs/almalinux_9_${{ matrix.architecture }}.sh ${{ inputs.minor_version}} ${{ inputs.build_number }}
@@ -133,6 +146,7 @@ jobs:
           MATTERMOST_USERNAME: 'github'
           TEXT: |
             ##### [TEST]: AlmaLinux OS 9.${{ inputs.minor_version }} WSL Images [Build](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}): `${{ needs.prepare.outputs.timestamp }}`
+            ${{ inputs.pungi_repos && ':warning: Built from **PUNGI pre-release repositories**' || '' }}
             ###### Images
             :almalinux: **x64:** [AlmaLinux-9.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64 }})
             :almalinux: **ARM64:** [AlmaLinux-9.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_ARM64 }})
@@ -159,6 +173,7 @@ jobs:
           MATTERMOST_USERNAME: 'github'
           TEXT: |
             ##### [RELEASE]: AlmaLinux OS 9.${{ inputs.minor_version }} WSL Images [Build](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}): `${{ needs.prepare.outputs.timestamp }}`
+            ${{ inputs.pungi_repos && ':warning: Built from **PUNGI pre-release repositories**' || '' }}
             ###### Images
             :almalinux: **x64:** [AlmaLinux-9.${{ inputs.minor_version }}_x64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_x64 }})
             :almalinux: **ARM64:** [AlmaLinux-9.${{ inputs.minor_version }}_ARM64_${{ needs.prepare.outputs.version }}.${{ inputs.build_number }}.wsl](${{ env.image_url_ARM64 }})

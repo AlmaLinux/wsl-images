@@ -31,6 +31,18 @@ bash -x rootfs/almalinux_10_x64.sh 1 0
 
 Output: `AlmaLinux-10."${minor_version}"_x64_"${build_version}".wsl`
 
+## Build from PUNGI pre-release repositories
+
+Before an AlmaLinux version is publicly released, its packages are only available from the PUNGI compose hosts (`https://<arch>-pungi-<major>.almalinux.dev`). To build the WSL images from those composes instead of the public repositories, rewrite the build scripts first:
+
+```sh
+bash tools/pungi-repos.sh
+```
+
+The script injects exclusive PUNGI compose repositories into the `dnf --installroot` command of the AlmaLinux OS 9 and 10 build scripts, and an explicit import of the AlmaLinux GPG key into the image rpmdb (pre-release compose packages may not be signed yet, so dnf runs with gpgcheck off and never performs the import itself), keeping the image content identical to a GA build. AlmaLinux OS 8 (no PUNGI hosts exist) and AlmaLinux OS Kitten (a rolling stream whose public repositories already are the latest compose) are left untouched. The rewrite is idempotent and is meant for the working tree only - do not commit the rewritten scripts.
+
+The Build AlmaLinux OS 9 and 10 WSL images workflows (`almalinux_9.yaml`, `almalinux_10.yaml`) automate this with the **Build from PUNGI pre-release repositories** input. The built images flow through the regular pipeline: stored to the object storage in test mode, or released on GitHub in release mode - from where the Build AlmaLinux OS .appx and .appxbundle workflow and the publishing to microsoft/WSL consume them as usual. The run name and the Mattermost notifications carry PUNGI warnings, so pre-release builds are unmistakable.
+
 ## Install
 
 ```sh
