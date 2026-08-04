@@ -49,8 +49,14 @@ jobs:
       - name: Set environment variables
         shell: powershell
         run: |
-          # Microsoft Visual Studio 2022 Enterprise MSBuild path
-          echo 'MSBUILD=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe' >> $env:GITHUB_ENV
+          # Locate MSBuild with vswhere: windows-latest rolls between Visual
+          # Studio versions and editions (currently VS 2026 Enterprise under
+          # 'C:\Program Files\Microsoft Visual Studio\18'), so the path
+          # cannot be hardcoded
+          $msbuild = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe" | Select-Object -First 1
+          if (-not $msbuild) { throw "MSBuild.exe not found" }
+          Write-Host "MSBuild: $msbuild"
+          echo "MSBUILD=$msbuild" >> $env:GITHUB_ENV
 
           # Set TIMESTAMP environment variable in format YYYYMMDDHHMMSS
           $timestamp = [DateTime]::UtcNow.ToString("yyyyMMddHHmmss")
@@ -146,6 +152,7 @@ jobs:
             /p:Configuration=Release `
             /p:Platform=x64 `
             /p:WindowsTargetPlatformVersion=10.0 `
+            /p:PlatformToolset=v145 `
             /p:OutDir="$Root\x64\Release\\" `
             /p:SolutionDir="$Root\\"
 
@@ -159,6 +166,7 @@ jobs:
             /p:Configuration=Release `
             /p:Platform=ARM64 `
             /p:WindowsTargetPlatformVersion=10.0 `
+            /p:PlatformToolset=v145 `
             /p:OutDir="$Root\ARM64\Release\\" `
             /p:SolutionDir="$Root\\"
 
@@ -174,6 +182,7 @@ jobs:
             /p:AppxBundle=Always `
             /p:AppxBundlePlatforms="x64|arm64" `
             /p:WindowsTargetPlatformVersion=10.0 `
+            /p:PlatformToolset=v145 `
             /p:SolutionDir="$Root\\" `
             /p:PackageCertificatePassword="${{ secrets.PFX_PASSWORD }}"
 
