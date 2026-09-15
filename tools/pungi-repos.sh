@@ -42,6 +42,12 @@
 # /rootfs, so the shipped image keeps the standard repositories seeded by
 # the almalinux-release package (which itself comes from the compose).
 #
+# The scripts derive their default minor version from the almalinux-release
+# package of the repository they build from (tools/almalinux-release.sh);
+# the rewrite exports PUNGI_REPOS=1 for that call, so an image built from
+# the compose is named after the pre-release version it contains (e.g.
+# 10.3 while the public repositories still ship 10.2).
+#
 # Intentionally NOT rewritten:
 #   - AlmaLinux 8: no PUNGI hosts exist - 8 keeps building from the
 #     public repositories.
@@ -85,6 +91,11 @@ for major in "${MAJORS[@]}"; do
             echo "[Error] ${f} has no '--releasever=${major}' dnf option, cannot inject the PUNGI repositories"
             exit 1
         fi
+        # shellcheck disable=SC2016
+        if ! grep -qF 'bash "$(dirname "$0")/../tools/almalinux-release.sh" '"${major}"' ' "${f}"; then
+            echo "[Error] ${f} does not derive the minor version with tools/almalinux-release.sh, cannot switch it to the PUNGI compose"
+            exit 1
+        fi
 
         arch=$(repo_arch "${suffix}")
         base="https://$(arch_dash "${arch}")-pungi-${major}.almalinux.dev/almalinux/${major}/${arch}/latest_result_almalinux/compose"
@@ -101,6 +112,9 @@ for major in "${MAJORS[@]}"; do
     --setopt=pungi-appstream.gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-${major} \\
 EOF
         awk -v ins="${inj}" '
+            /tools\/almalinux-release\.sh" / && !/PUNGI_REPOS=1/ {
+                sub(/\$\(bash /, "$(PUNGI_REPOS=1 bash ")
+            }
             { print }
             /^[[:space:]]*--releasever=/ && !repos_done {
                 while ((getline line < ins) > 0) print line
@@ -113,13 +127,19 @@ EOF
     done
 done
 
-# Verify every 9/10 rootfs script now installs from the PUNGI compose.
+# Verify every 9/10 rootfs script now installs from the PUNGI compose and
+# derives its minor version from it.
 for major in "${MAJORS[@]}"; do
     for suffix in "${SUFFIXES[@]}"; do
         f="rootfs/almalinux_${major}_${suffix}.sh"
         [ -e "${f}" ] || continue
         if ! grep -q 'pungi-baseos' "${f}"; then
             echo "[Error] ${f} still installs from the public repositories after the PUNGI rewrite"
+            exit 1
+        fi
+        # shellcheck disable=SC2016
+        if ! grep -qF 'PUNGI_REPOS=1 bash "$(dirname "$0")/../tools/almalinux-release.sh"' "${f}"; then
+            echo "[Error] ${f} still derives the minor version from the public repositories after the PUNGI rewrite"
             exit 1
         fi
     done

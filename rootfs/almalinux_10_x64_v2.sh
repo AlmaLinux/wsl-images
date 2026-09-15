@@ -9,7 +9,15 @@ set -ue
 # - Build tools: dnf -y install @container-management jq
 
 timestamp=$(date -u '+%Y%m%d')
-minor_version="${1:-2}"
+# Minor version: the first argument, or - when not given - derived from the
+# almalinux-release package in the BaseOS repository the image is built from
+# (tools/almalinux-release.sh), so the image name agrees with
+# /etc/almalinux-release inside it without hardcoding the minor version.
+minor_version="${1:-}"
+if [ -z "${minor_version}" ]; then
+    release=$(bash "$(dirname "$0")/../tools/almalinux-release.sh" 10 x86_64_v2)
+    minor_version="${release#10.}"
+fi
 build_number="${2:-0}"
 build_version="${timestamp}"."${build_number}"
 output_file=AlmaLinux-10."${minor_version}"_x64_v2_"${build_version}".wsl
@@ -68,6 +76,17 @@ buildah run "$wsl_builder_ct" -- dnf -y \
     tmux \
     jq
 
+
+# Verify the installed release matches the image name. The minor version
+# was derived from (or given for) one repository, while the image was just
+# installed from the repository of its own arch - the two can lag behind
+# each other during a release sync or a PUNGI compose cycle.
+release_string=$(buildah run "$wsl_builder_ct" -- cat /rootfs/etc/almalinux-release)
+if ! [[ "${release_string}" =~ ^"AlmaLinux release 10.${minor_version}"( |$) ]]; then
+    echo "[Error] The image says '${release_string}', not AlmaLinux release 10.${minor_version} as its name claims" >&2
+    exit 1
+fi
+printf 'Installed release: %s\n' "${release_string}"
 
 # Cleanup
 # DNF
