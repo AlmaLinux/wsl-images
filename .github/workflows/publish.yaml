@@ -13,13 +13,13 @@ on:
 jobs:
   create_publishing_pr:
     name: Create publishing PR
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v10.2.0
 
       - name: Generate distribution manifest
         run: uv run tools/distribution_manifest_updater.py
@@ -40,7 +40,7 @@ jobs:
 
       - name: Checkout WSL repository
         if: ${{ env.diff_exit_code == '1' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: almalinux/WSL
           path: almalinux_wsl
@@ -108,7 +108,7 @@ jobs:
 
       - name: Notify
         if: ${{ env.diff_exit_code == '1' && inputs.almalinux_chat_notify }}
-        uses: mattermost/action-mattermost-notify@master
+        uses: mattermost/action-mattermost-notify@v2.1.0
         with:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
           MATTERMOST_CHANNEL: ${{ inputs.almalinux_chat_channel }}
