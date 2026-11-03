@@ -11,10 +11,10 @@ Shell scripts and configuration files are stored on `rootfs` to build RootFS in 
 ## Build
 
 Each distro and major version has own builder scripts. Each scripts has these positional parameters:
-- `minor_version`: Minor version of AlmaLinux OS 10. By default it's set to latest (e.g. 2 for 10.2).
+- `minor_version`: Minor version of AlmaLinux OS 10. When not given, it is derived from the `almalinux-release` package in the BaseOS repository the image is built from (see `tools/almalinux-release.sh` below), so it always matches the latest minor release without any hardcoded version.
 - `build_number`: The build number of the version. Default value is the `0` as a first build of a version.
 
-Example: AlmaLinux OS 10 with default minor version (`2` for `10.2`) and build number (e.g. `20250801.0`).
+Example: AlmaLinux OS 10 with the derived minor version (e.g. `2` for `10.2`) and build number (e.g. `20250801.0`).
 
 With default values.
 
@@ -30,6 +30,31 @@ bash -x rootfs/almalinux_10_x64.sh 1 0
 ```
 
 Output: `AlmaLinux-10."${minor_version}"_x64_"${build_version}".wsl`
+
+## Build from PUNGI pre-release repositories
+
+Before an AlmaLinux version is publicly released, its packages are only available from the PUNGI compose hosts (`https://<arch>-pungi-<major>.almalinux.dev`). To build the WSL images from those composes instead of the public repositories, rewrite the build scripts first:
+
+```sh
+bash tools/pungi-repos.sh
+```
+
+The script injects exclusive PUNGI compose repositories into the `dnf --installroot` command of the AlmaLinux OS 9 and 10 build scripts. The compose packages are signed with the official AlmaLinux key of the major, so gpgcheck stays on with the key from the builder container, and dnf imports it into the image rpmdb exactly as in a GA build - the image content is identical to a GA build. AlmaLinux OS 8 (no PUNGI hosts exist) and AlmaLinux OS Kitten (a rolling stream whose public repositories already are the latest compose) are left untouched. The rewrite is idempotent and is meant for the working tree only - do not commit the rewritten scripts.
+
+The rewritten scripts derive their default `minor_version` from the compose, so a build started without a `minor_version` argument is named after the pre-release version it contains (e.g. `10.3` while the public repositories still ship `10.2`).
+
+### Minor version
+
+No AlmaLinux minor version is hardcoded in the build scripts or the workflows. `tools/almalinux-release.sh <major> [arch]` prints the `almalinux-release` package version found in the BaseOS repodata of the repository the images are built from: the public repository `repo.almalinux.org` for AlmaLinux OS 8, 9 and 10, or, with `PUNGI_REPOS=1`, the PUNGI compose for AlmaLinux OS 9 and 10:
+
+```sh
+bash tools/almalinux-release.sh 10              # e.g. 10.2
+PUNGI_REPOS=1 bash tools/almalinux-release.sh 10 # e.g. 10.3
+```
+
+The build scripts call it when no `minor_version` argument is given, and the **Build timestamp and version** job of the workflows calls it before every build, so the image names, the object storage paths, the GitHub release tag and the notifications follow `/etc/almalinux-release` inside the images. After the install, every build script also checks that `/etc/almalinux-release` inside the image says that version and fails otherwise - the version was derived from one repository, while each arch installs from its own, and the two can lag behind each other during a release sync or a PUNGI compose cycle. Nothing needs to be edited when a new AlmaLinux minor release is published.
+
+The Build AlmaLinux OS 9 and 10 WSL images workflows (`almalinux_9.yaml`, `almalinux_10.yaml`) automate this with the **Build from PUNGI pre-release repositories** input. With that input the minor version is derived from the compose instead of the public repository (see Minor version above), so the images, the object storage paths and the GitHub release tag are named after the pre-release version. The built images flow through the regular pipeline: stored to the object storage in test mode, or released on GitHub in release mode - from where the Build AlmaLinux OS .appx and .appxbundle workflow and the publishing to microsoft/WSL consume them as usual. The run name and the Mattermost notifications carry PUNGI warnings, so pre-release builds are unmistakable.
 
 ## Install
 

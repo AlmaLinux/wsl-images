@@ -12,4 +12,4 @@ These images can also be downloaded from the releases section of this GitHub rep
 
 ## Documentation
 
-The `docs` directoy is used to store documentation about how building, testing and publishing is done.
+The `docs` directoy is used to store documentation about how building, testing and publishing is done. Building images and applications from the PUNGI pre-release repositories, before an AlmaLinux version is publicly released, is covered in [docs/Building.md](docs/Building.md).
