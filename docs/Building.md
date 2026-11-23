@@ -98,7 +98,18 @@ $params = @{
 New-SelfSignedCertificate @params
 ```
 
-4. Right click on the AlmaLinux-8/9 project > Publish > Create package for side-loading.
+4. Set the application version. The `Version` of the `Identity` element in `apps/<major>/AlmaLinux-<major>/AlmaLinux-<major>.appxmanifest` is committed as the `0.0.0.0` placeholder: the Build AlmaLinux OS .appx and .appxbundle workflow sets the real one at build time, so a manual build has to set it too. Use `<Major>.<Minor>.<Build>.0`, where `<Major>.<Minor>` is the AlmaLinux version of the RootFS (e.g. `10.3.1.0`); the last part has to stay `0`, as Microsoft Store reserves it.
+
+```powershell
+$ManifestPath = 'apps/10/AlmaLinux-10/AlmaLinux-10.appxmanifest'
+[xml]$xml = Get-Content $ManifestPath
+$xml.Package.Identity.Version = '10.3.1.0'
+$xml.Save((Resolve-Path $ManifestPath))
+```
+
+Do not commit the changed version.
+
+5. Right click on the AlmaLinux-8/9 project > Publish > Create package for side-loading.
 
 ## Testing
 
